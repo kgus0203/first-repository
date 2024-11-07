@@ -5,25 +5,18 @@ def make_group():
 
     select_species = st.selectbox(
         '그룹을 생성하시겠습니까?',
-        ['yes','no']
+        ['네','아니오']
 
     )
     st.radio(
-        "what type of food you want to eat?",
-        options=["Italian food", "fast food", "Korean food", "Chinese food"],
+        "어떤 종류의 음식점을 가나요?",
+        options=["양식", "패스트푸드", "한식", "중식",'일식','분식'],
 
     )
-    st.radio(
-        "How many people do you want?",
-        options={"1","2","3","4","5"},
-
-    )
-
-    st.text_input(label="What's your group name?")
-    st.date_input("When's the recruitment deadline?")
-    st.button(
-        "filter apply 📊 "
-    )
+    st.text_input(label="몇 명을 모집할까요?")
+    st.text_input(label="그룹명을 정해주세요")
+    st.date_input("모집 마감일은 언제까지인가요?")
+    st.button("적용")
 
 from datetime import datetime
 
