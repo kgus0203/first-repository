@@ -1,4 +1,22 @@
-#프렌드유저, 블록 유저, 프렌드 매니저 클래스, 함수 구현
+
+# 프렌드 다이어그램 클래스 - 프렌드유저, 프렌드매니저, 블락매니저 
+# + create_connection 함수 추가 mysql 연결, 프렌드매니저db 클래스 추가 : 기존 프렌드 매니저 확장 형태
+
+
+import pymysql
+
+
+# 데이터베이스 연결 함수
+def create_connection():
+    connection = pymysql.connect(
+        host='localhost',
+        user='zip',
+        password='12zipzip34',
+        database='zip',
+        charset='utf8mb4'
+    )
+    return connection
+
 
 class FriendUser:
     def __init__(self, user_id, name, profile_info):
@@ -60,6 +78,7 @@ class FriendUser:
     def get_blocked_users(self):
         return self.__block_list
 
+
 class FriendManager:
     def __init__(self):
         """
@@ -109,6 +128,7 @@ class FriendManager:
         """
         return friend_id in self.__friend_list
 
+
 class BlockManager:
     def __init__(self):
         """
@@ -157,4 +177,43 @@ class BlockManager:
         :return: 차단된 사용자 ID 목록
         """
         return self.__block_list
-        
+
+
+# ---------------------- 추가된 코드 ----------------------
+
+# FriendManager에 데이터베이스 연동 메서드 추가
+class FriendManagerDB(FriendManager):
+    def add_friend_to_db(self, user_id, friend_id):
+        """
+        데이터베이스에 친구 추가.
+        """
+        connection = create_connection()
+        try:
+            with connection.cursor() as cursor:
+                query = "INSERT INTO friends (user_id, friend_id) VALUES (%s, %s)"
+                cursor.execute(query, (user_id, friend_id))
+                connection.commit()
+                return True
+        except Exception as e:
+            print(f"Error adding friend to database: {e}")
+            return False
+        finally:
+            connection.close()
+
+    def remove_friend_from_db(self, user_id, friend_id):
+        """
+        데이터베이스에서 친구 삭제.
+        """
+        connection = create_connection()
+        try:
+            with connection.cursor() as cursor:
+                query = "DELETE FROM friends WHERE user_id = %s AND friend_id = %s"
+                cursor.execute(query, (user_id, friend_id))
+                connection.commit()
+                return True
+        except Exception as e:
+            print(f"Error removing friend from database: {e}")
+            return False
+        finally:
+            connection.close()
+
