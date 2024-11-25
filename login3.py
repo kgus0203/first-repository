@@ -1,145 +1,76 @@
 import streamlit as st
-import pymysql
-import bcrypt
+import sqlite3
+import pandas as pd
+from datetime import datetime
 
 
-# 데이터베이스 연결 함수
-def create_connection():
-    connection = pymysql.connect(
-        host='192.168.0.48',
-        user='zip',  # MySQL 사용자 계정
-        password='12zipzip34',  # MySQL 비밀번호
-        database='zip',  # 데이터베이스 이름
-        charset='utf8mb4'
-    )
-    return connection
+# SQLite 데이터베이스 연결
+def init_db():
+    conn = sqlite3.connect('chatroom.db')
+    cursor = conn.cursor()
+
+    # 채팅 메시지를 저장할 테이블 생성
+    cursor.execute('''CREATE TABLE IF NOT EXISTS messages (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        room_name TEXT,
+                        username TEXT,
+                        message TEXT,
+                        timestamp DATETIME)''')
+    conn.commit()
+    conn.close()
 
 
-# UserVO (사용자 정보 클래스)
-class UserVO:
-    def __init__(self, user_id='', user_password='', user_email='', user_seq=None, user_is_online=False):
-        self.user_id = user_id
-        self.user_password = user_password
-        self.user_email = user_email
-        self.user_seq = user_seq
-        self.user_is_online = user_is_online
+# 메시지 저장 함수
+def save_message(room_name, username, message):
+    conn = sqlite3.connect('chatroom.db')
+    cursor = conn.cursor()
+    timestamp = datetime.now()
+    cursor.execute("INSERT INTO messages (room_name, username, message, timestamp) VALUES (?, ?, ?, ?)",
+                   (room_name, username, message, timestamp))
+    conn.commit()
+    conn.close()
 
 
-# UserDAO (데이터베이스 연동 클래스)
-class UserDAO:
-    # 아이디 중복 체크
-    def check_user_id_exists(self, user_id):
-        connection = create_connection()
-        try:
-            with connection.cursor() as cursor:
-                query = "SELECT * FROM user WHERE user_id = %s"
-                cursor.execute(query, (user_id,))
-                result = cursor.fetchone()
-                return result is not None
-        except pymysql.MySQLError as e:
-            st.error(f"DB 오류: {e}")
-        finally:
-            connection.close()
-
-    # 아이디로 사용자 검색
-    def search_user(self, user_id):
-        connection = create_connection()
-        try:
-            with connection.cursor() as cursor:
-                query = "SELECT * FROM user WHERE user_id = %s"
-                cursor.execute(query, (user_id,))
-                result = cursor.fetchone()
-                return result
-        except pymysql.MySQLError as e:
-            st.error(f"DB 오류: {e}")
-        finally:
-            connection.close()
-
-    # 비밀번호 해싱 및 사용자 추가
-    def insert_user(self, user):
-        connection = create_connection()
-
-        # 비밀번호 해싱 (bcrypt 사용)
-        hashed_password = bcrypt.hashpw(user.user_password.encode('utf-8'), bcrypt.gensalt())
-
-        try:
-            with connection.cursor() as cursor:
-                query = "INSERT INTO user (user_id, user_password, user_email) VALUES (%s, %s, %s)"
-                cursor.execute(query, (user.user_id, hashed_password.decode('utf-8'), user.user_email))
-                connection.commit()
-        except pymysql.MySQLError as e:
-            st.error(f"DB 오류: {e}")
-        finally:
-            connection.close()
-
-    # 비밀번호 체크 (bcrypt로 비교)
-    def check_password(self, hashed_password, plain_password):
-        return bcrypt.checkpw(plain_password.encode('utf-8'), hashed_password.encode('utf-8'))
+# 채팅 메시지 불러오기 함수
+def load_messages(room_name):
+    conn = sqlite3.connect('chatroom.db')
+    cursor = conn.cursor()
+    cursor.execute("SELECT username, message, timestamp FROM messages WHERE room_name = ? ORDER BY timestamp",
+                   (room_name,))
+    messages = cursor.fetchall()
+    conn.close()
+    return messages
 
 
-# 회원가입 처리 클래스
-class SignUp:
-    def __init__(self, user_id, user_password, user_email):
-        self.user = UserVO(user_id=user_id, user_password=user_password, user_email=user_email)
+# Streamlit 앱 구성
+def main():
+    st.title('채팅 시스템')
 
-    def sign_up_event(self):
-        dao = UserDAO()
+    # 채팅 룸 이름 입력
+    room_name = st.text_input("채팅 룸 이름", "General")
 
-        # 아이디 중복 체크
-        if dao.check_user_id_exists(self.user.user_id):
-            st.error("이미 사용 중인 아이디입니다.")
-            return
+    if room_name:
+        # 유저 이름 입력
+        username = st.text_input("이름을 입력하세요", "사용자")
 
-        dao.insert_user(self.user)
-        st.success("회원가입이 완료되었습니다!")
+        # 메시지 입력
+        message = st.text_input("메시지를 입력하세요")
 
-
-# 로그인 처리 클래스
-class SignIn:
-    def __init__(self, user_id, user_password):
-        self.user_id = user_id
-        self.user_password = user_password
-
-    def sign_in_event(self):
-        dao = UserDAO()
-        result = dao.search_user(self.user_id)
-
-        if result:
-            # 저장된 해시된 비밀번호 가져오기
-            stored_hashed_password = result[1]  # result[1]은 해싱된 비밀번호
-            if dao.check_password(stored_hashed_password, self.user_password):  # bcrypt로 비밀번호 비교
-                st.success("로그인 성공")
-                return True
+        if st.button("보내기"):
+            if message:
+                save_message(room_name, username, message)
+                st.success("메시지가 전송되었습니다.")
             else:
-                st.error("비밀번호가 잘못되었습니다.")
-        else:
-            st.error("아이디가 존재하지 않습니다.")
-        return False
+                st.warning("메시지를 입력해주세요.")
+
+        # 채팅 메시지 불러오기
+        messages = load_messages(room_name)
+
+        # 메시지 표시
+        for msg in messages:
+            st.write(f"**{msg[0]}** ({msg[2]}): {msg[1]}")
 
 
-# Streamlit UI 구성
-
-# 페이지 선택
-page = st.sidebar.selectbox("페이지 선택", ["회원가입", "로그인"])
-
-# 회원가입 페이지
-if page == "회원가입":
-    st.title("회원가입")
-    user_id = st.text_input("아이디")
-    user_password = st.text_input("비밀번호", type='password')
-    email = st.text_input("이메일")
-
-    if st.button("회원가입"):
-        user_info = UserVO(user_id=user_id, user_password=user_password, user_email=email)
-        signup = SignUp(user_id, user_password, email)
-        signup.sign_up_event()
-
-# 로그인 페이지
-elif page == "로그인":
-    st.title("로그인")
-    user_id = st.text_input("아이디")
-    user_password = st.text_input("비밀번호", type='password')
-
-    if st.button("로그인"):
-        sign_in = SignIn(user_id, user_password)
-        sign_in.sign_in_event()
+if __name__ == "__main__":
+    init_db()  # DB 초기화
+    main()  # 앱 실행
