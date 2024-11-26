@@ -3,13 +3,11 @@ import sqlite3
 from datetime import datetime
 import os
 import requests
-import folium
-from streamlit_folium import st_folium
 import pandas as pd
 
 class LocationGet:
     def create_connection(self):
-        conn = sqlite3.connect('zip.db') 
+        conn = sqlite3.connect('zip.db')
         conn.row_factory = sqlite3.Row
         return conn
 
@@ -81,24 +79,32 @@ class LocationSearch:
 
             # 지역 이름 선택
             selected_place = st.selectbox("검색 결과를 선택하세요:", [name for name, _, _, _ in locations])
-
+            location_data = []
             # 선택된 장소의 정보 찾기
             for place in locations:
                 if place[0] == selected_place:
                     name, address, latitude, longitude = place
 
-                    # folium 지도 생성
-                    m = folium.Map(location=[latitude, longitude], zoom_start=17)
-                    folium.Marker([latitude, longitude], tooltip=f"{name}\n{address}",
-                                 icon=folium.Icon(color='blue', icon='star', icon_color='white')).add_to(m)
+                    # Append to location data
+                    location_data.append({
+                        'name': name,
+                        'address': address,
+                        'latitude': latitude,
+                        'longitude': longitude
+                    })
 
-                    st_folium(m, width=800, height=400)  # Streamlit에서 folium 지도 표시
+                    # Display place details
                     col3, col4 = st.columns([4, 1])
                     with col3:
                         st.write(f"장소 이름: {name}")
                         st.write(f"주소: {address}")
-                        self.db_manager.save_location(name, address, latitude, longitude)
+                        # Here you would save to your database
+                        # self.db_manager.save_location(name, address, latitude, longitude)
 
+            # Show map with st.map
+            if location_data:
+                df = pd.DataFrame(location_data)
+                st.map(df[['latitude', 'longitude']])
 
 class PostManager:
     def __init__(self, upload_folder='uploaded_files'):
@@ -129,31 +135,27 @@ class PostManager:
         conn.close()
 
     def create_map_with_markers(self):
-        if self.locations_df is None:
+        # Check if the DataFrame is empty
+        if self.locations_df is None or self.locations_df.empty:
             st.error("위치가 존재하지 않습니다")
+            return
 
-        # 첫 번째 위치의 위도, 경도로 초기 위치 설정
-        latitude = self.locations_df.iloc[0]['latitude']
-        longitude = self.locations_df.iloc[0]['longitude']
-
-        # Folium 맵 생성
-        self.map = folium.Map(location=[latitude, longitude], zoom_start=17)
-
-        # 각 위치에 마커 추가
+        # Display place details
         for index, row in self.locations_df.iterrows():
-            lat = row['latitude']
-            lon = row['longitude']
             name = row['location_name']
             address = row['address_name']
-
-            folium.Marker([lat, lon],
-                         tooltip=f"{name}\n{address}",
-                         icon=folium.Icon(color='blue', icon='star', icon_color='white')).add_to(self.map)
+            st.write(f"장소 이름: {name}")
+            st.write(f"주소: {address}")
 
     def display_map(self, key):
-        if self.map is None:
+        # Check if locations are available
+        if self.locations_df is None or self.locations_df.empty:
             st.warning('위치 등록이 되어있지 않습니다')
-        st_folium(self.map, width=800, height=400, key=key)
+            return
+
+        # Display the map with st.map (using latitude and longitude columns)
+        st.map(self.locations_df[['latitude', 'longitude']], key=key)
+
 
     # posting에 디비 저장 , 사진 업로드 한 개 밖에 못함
     def add_post(self, title, content, image_file, file_file, category):
