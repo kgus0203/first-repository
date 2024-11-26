@@ -9,7 +9,7 @@ import pandas as pd
 
 class LocationGet:
     def create_connection(self):
-        conn = sqlite3.connect('zip.db')
+        conn = sqlite3.connect('zip.db') 
         conn.row_factory = sqlite3.Row
         return conn
 
