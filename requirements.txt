@@ -1,5 +1,3 @@
 bcrypt
 folium
-login
-pages
-posting
+streamlit_folium
