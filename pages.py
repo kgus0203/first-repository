@@ -39,10 +39,10 @@ def home_page():
     with col2:
         col3, col4 = st.columns(2)
         with col3:
-            if st.button("로그인", use_container_width=True):
+            if st.button("로그인", use_container_width=True,key='login'):
                 change_page('Login')
         with col4:
-            if st.button("회원가입", use_container_width=True):
+            if st.button("회원가입", use_container_width=True,key='signup'):
                 change_page('Signup')
 
     # 중앙 포스팅 리스트
@@ -70,7 +70,7 @@ def login_page():
             sign_in = login.SignIn(user_id, user_password)
             sign_in.sign_in_event()
     if st.button("ID/PW 찾기"):
-        change_page()
+        change_page('User manager')
 
 #회원가입 페이지
 def signup_page():
@@ -120,7 +120,7 @@ def after_login():
     with col3:
         if st.button("로그아웃"):
             st.warning("로그아웃 되었습니다.")
-            st.session_state.user.clear()  # 세션 초기화
+            st.session_state.user=""  # 세션 초기화
             change_page('Home')
     with col4:
         if st.button("내 프로필"):
@@ -279,6 +279,27 @@ def setting_page():
 
     view.render_posts()
 
+
+def usermanager_page():
+
+    st.title("사용자 관리 페이지")
+    email = st.text_input('이메일을 입력하세요: ')
+
+    if st.button("확인"):
+        smtp_email = "kgus0203001@gmail.com"  # 발신 이메일 주소
+        smtp_password = "pwhj fwkw yqzg ujha"  # 발신 이메일 비밀번호
+        user_manager = login.UserManager(smtp_email, smtp_password)
+
+        # 이메일 등록 여부 확인
+        user_info = user_manager.is_email_registered(email)
+        if user_info:
+            st.success(f"비밀번호 복구 메일을 전송했습니다")
+            # 복구 이메일 전송
+            user_manager.send_recovery_email(email)
+        else:
+            st.warning("등록되지 않은 이메일입니다.")
+
+
 # 페이지 함수 매핑
 page_functions = {
     'Home': home_page,
@@ -290,10 +311,16 @@ page_functions = {
     'Delete Post': delete_post,
     'View Post': view_post,
     'Setting': setting_page,
+    'User manager' : usermanager_page
 }
 
 # 현재 페이지 렌더링
 if st.session_state.current_page in page_functions:
+
     page_functions[st.session_state.current_page]()  # 매핑된 함수 호출
+
+
+
+
 else:
     st.error("페이지를 찾을 수 없습니다.")  # 잘못된 페이지 처리
