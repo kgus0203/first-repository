@@ -1,3 +1,4 @@
 bcrypt
 folium
 streamlit_folium
+zip.db
