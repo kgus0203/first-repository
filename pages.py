@@ -201,51 +201,75 @@ def display_friend(name, online):
 
     )
 
+#사이드바 : 그룹, 친구 설정
 def friend_and_group_sidebar(user_id):
     st.sidebar.title("그룹 관리")  # '그룹 관리'를 title 스타일로 표시
     if st.sidebar.button("그룹 관리"):
         st.session_state["current_page"] = "Group Management"  # 페이지를 'Group Management'로 설정
-        st.rerun()  # 페이지 새로고침
+        st.rerun()
 
-    # 친구 관리 상위 요소
+
     st.sidebar.title("친구 관리")  # '친구 관리'도 title 스타일로 표시
-    # 친구찾기 버튼
-    if st.sidebar.button("친구찾기"):
-        friend_user_id = st.text_input("추가할 친구 ID:")
-        if st.button("팔로우 요청 보내기"):
-            if friend_user_id:
-                friend.follow_friend(user_id, friend_user_id)
-            else:
-                st.error("친구 ID를 입력하세요.")
+
+#친구 리스트
+    if st.sidebar.button("내 친구 리스트"):
+        st.session_state["current_page"] = "FriendList"  # 'FriendList' 페이지로 설정
+        st.session_state["action"] = "view_friend_list"
+        st.rerun()
+        
+ # "내 친구 리스트" 상태일 때 추가 UI
+    if st.session_state.get("current_page") == "FriendList":
+        st.title("내 친구 리스트")
+        friend.show_friend_list(user_id)  # 친구 리스트 출력
+
+        # 뒤로가기 버튼 추가
+        if st.button("뒤로가기", key="friend_list_back_button"):
+            st.session_state["current_page"] = "Home"  # 홈 페이지로 돌아가기
+            st.rerun()
+
+    # 하나의 입력창
+    target_id = st.sidebar.text_input("ID를 입력하세요:", key="friend_action_input")
+
+    # 팔로우 요청 버튼
+    if st.sidebar.button("친구 요청 보내기", key="add_friend_button"):
+        if target_id:
+            friend.add_friend(user_id, target_id)
+            
+        
 
     # 친구 대기 버튼
-    if st.sidebar.button("친구 대기"):
-        pending_requests = friend.get_follow_requests(user_id)
-        if pending_requests:
-            st.subheader("친구 요청 대기 목록")
-            for req in pending_requests:
-                st.write(f"요청자: {req['user_id']}")
-                if st.button(f"수락: {req['user_id']}"):
-                    friend.handle_follow_request(user_id, req['user_id'], "accept")
-                if st.button(f"거절: {req['user_id']}"):
-                    friend.handle_follow_request(user_id, req['user_id'], "reject")
-        else:
-            st.write("대기 중인 요청이 없습니다.")
+    if st.sidebar.button("친구 대기", key="friend_requests_button"):
+        st.session_state["action"] = "view_friend_requests"
+        
 
     # 차단/해제 버튼
-    if st.sidebar.button("차단/해제"):
-        blocked_user_id = st.text_input("차단/해제할 친구 ID:")
-        if st.button("차단"):
-            st.write(f"{blocked_user_id}님을 차단했습니다.")  # 여기에 차단 로직 추가 가능
-        if st.button("차단 해제"):
-            st.write(f"{blocked_user_id}님 차단을 해제했습니다.")  # 여기에 차단 해제 로직 추가 가능
+    if st.sidebar.button("차단"):
+        if target_id:
+            friend.block_friend(user_id, target_id)
+        else:
+            st.session_state["action"] = "ID를 입력하세요."
+
+
+    if st.sidebar.button("차단 해제"):
+        if target_id:
+            friend.unblock_friend(user_id, target_id)
+        else:
+            st.session_state["action"] = "ID를 입력하세요."
 
     # 친구 삭제 버튼
     if st.sidebar.button("삭제"):
-        delete_user_id = st.text_input("삭제할 친구 ID:")
-        if st.button("삭제 확인"):
-            # 삭제 로직 호출
-            st.write(f"{delete_user_id}님을 친구 목록에서 삭제했습니다.")  # 여기에 삭제 로직 추가 가능
+        if target_id:
+            friend.delete_friend(user_id, target_id)
+            
+        else:
+            st.session_state["action"] = "ID를 입력하세요."
+
+    
+      # 작업 결과 또는 상태 표시
+    if "action" in st.session_state:
+        st.write(st.session_state["action"])
+        del st.session_state["action"]
+
 
 # 게시물 등록 페이지
 def upload_post() :
