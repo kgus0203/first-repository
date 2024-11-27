@@ -174,7 +174,7 @@ def after_login():
     col1, col2, col3, col4 = st.columns([1, 4, 1, 1])
     with col1:
         # 프로필 이미지를 클릭하면 페이지 이동
-        st.image(profile_image_url,use_column_width=100
+        st.image(profile_image_url,use_container_width=100
         )
     with col2:
         st.write(f"**{user_id}**")
@@ -276,13 +276,20 @@ def upload_post() :
     location_search = posting.LocationSearch()
     location_search.display_location_on_map()
 
+    col1, col2 = st.columns([6, 2])
 
-    if st.button("게시물 등록"):
-       if title and content:
-           post_manager.add_post(title, content, image_file, file_file,selected_category_id)
-           st.success("게시물이 등록되었습니다.")
-       else:
-           st.error("제목과 내용을 입력해 주세요.")
+    with col1:
+        if st.button("게시물 등록"):
+            if title and content:
+                post_manager.add_post(title, content, image_file, file_file, selected_category_id)
+                st.success("게시물이 등록되었습니다.")
+            else:
+                st.error("제목과 내용을 입력해 주세요.")
+
+        with col2:
+            if st.button("뒤로가기"):
+                go_back()  # 뒤로가기 로직 호출
+
 
 # 게시물 수정 페이지
 def change_post() :
