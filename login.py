@@ -9,6 +9,7 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from email.header import Header
 import re
+
 # 데이터베이스 연결 함수
 def create_connection():
     conn = sqlite3.connect('zip.db')
@@ -90,12 +91,12 @@ class UserDAO:
     def check_password(self, hashed_password, plain_password):
         return bcrypt.checkpw(plain_password.encode('utf-8'), hashed_password)
 
-    def update_user_online(user_id, is_online):
+    def update_user_online(self,user_id,is_online):
         connection = create_connection()
         try:
             cursor = connection.cursor()
-            query = "UPDATE user SET user_is_online = 1 WHERE user_id = ?"
-            cursor.execute(query, (is_online, user_id))
+            query = "UPDATE user SET user_is_online = 1 WHERE user_is_online=? user_id = ?"
+            cursor.execute(query, (user_id, is_online))
             connection.commit()
         except sqlite3.Error as e:
             st.error(f"DB 오류: {e}")
@@ -134,6 +135,7 @@ class SignIn:
     def __init__(self, user_id, user_password):
         self.user_id = user_id
         self.user_password = user_password
+        self.user_is_online=0
 
     def sign_in_event(self):
         dao = UserDAO()
@@ -144,6 +146,7 @@ class SignIn:
             stored_hashed_password = result['user_password']  # result는 딕셔너리 형태
             if dao.check_password(stored_hashed_password, self.user_password):  # bcrypt로 비밀번호 비교
                 st.session_state["user_id"] = self.user_id  # 로그인 성공 시 세션에 user_id 저장
+                self.user_is_online = 1
                 pages.change_page('after_login')
                 return True
             else:
@@ -152,6 +155,15 @@ class SignIn:
             st.error("아이디가 존재하지 않습니다.")
         return False
 
+    def log_out_event(self):
+        # This can be triggered by a logout button
+        if st.button("로그아웃", key="logout_button"):
+            dao = UserDAO()
+            dao.update_user_online(st.session_state["user_id"], 0)  # Set is_online to 0 in D
+            st.session_state.user_id = ''  # Clear the session variable
+            st.session_state.user_password =''
+            st.warning("로그아웃 완료")
+            pages.change_page('Home')
 
 
 class UserManager:
