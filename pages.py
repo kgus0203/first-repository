@@ -114,18 +114,34 @@ def login_page():
 #회원가입 페이지
 def signup_page():
     st.title("회원가입")
+
+    # 사용자 입력 받기
     user_id = st.text_input("아이디")
     user_password = st.text_input("비밀번호", type='password')
     email = st.text_input("이메일")
 
+    # 가입 버튼 및 뒤로가기 버튼 배치
     col1, col2 = st.columns([1, 1])  # 버튼을 나란히 배치
     with col1:
         if st.button("회원가입", key="signup_submit_button"):
             if not user_id or not user_password or not email:
                 st.error("모든 필드를 입력해 주세요.")
             else:
+                # 회원가입 처리 객체 생성
                 signup = login.SignUp(user_id, user_password, email)
+
+                # 비밀번호 길이 체크
+                if not signup.check_length():
+                    return  # 비밀번호가 너무 짧으면 더 이상 진행하지 않음
+
+                # 사용자 ID 중복 체크
+                if not signup.check_user():
+                    return  # 중복 아이디가 있으면 더 이상 진행하지 않음
+
+                # 모든 검증을 통과하면 회원가입 진행
                 signup.sign_up_event()
+                st.success("회원가입이 완료되었습니다!")
+
     with col2:
         if st.button("뒤로가기", key="signup_back_button"):
             go_back()  # 뒤로가기 로직 호출
@@ -159,14 +175,7 @@ def after_login():
     col1, col2, col3, col4 = st.columns([1, 4, 1, 1])
     with col1:
         # 프로필 이미지를 클릭하면 페이지 이동
-        st.markdown(
-            f"""
-                <a href="#" onclick="document.querySelector('input[name=current_page]').value = 'Setting'; 
-                document.querySelector('button[type=submit]').click();">
-                    <img src="{profile_image_url}" alt="프로필 이미지" style="width: 100%; border-radius: 50%; cursor: pointer;">
-                </a>
-                """,
-            unsafe_allow_html=True
+        st.image(profile_image_url,use_column_width=100
         )
     with col2:
         st.write(f"**{user_id}**")
@@ -277,7 +286,7 @@ def upload_post() :
            st.error("제목과 내용을 입력해 주세요.")
 
 # 게시물 수정 페이지
-def change_post() : 
+def change_post() :
     st.header("게시물 수정")
     post_id = st.number_input("수정할 게시물 ID", min_value=1)
     posts = posting.get_all_posts()
@@ -298,7 +307,7 @@ def change_post() :
         st.error("해당 게시물이 존재하지 않습니다.")
 
 # 게시물 삭제 페이지
-def delete_post() : 
+def delete_post() :
     st.header("게시물 삭제")
     post_id = st.number_input("삭제할 게시물 ID", min_value=1)
     posts = posting.get_all_posts()
@@ -323,7 +332,7 @@ def view_post():
         if st.button("글 작성"):
             change_page('Upload Post')
     # PostManager 인스턴스를 생성
-    post_manager = posting.PostManager()  
+    post_manager = posting.PostManager()
     # display_posts 메서드를 호출
     post_manager.display_posts()
 
