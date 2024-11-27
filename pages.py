@@ -1,8 +1,6 @@
-import pandas as pd
+
 import streamlit as st
 import sqlite3
-import bcrypt
-import database
 import login
 import posting
 import friend
@@ -119,16 +117,17 @@ def signup_page():
     user_id = st.text_input("아이디")
     user_password = st.text_input("비밀번호", type='password')
     email = st.text_input("이메일")
-
+    # 회원가입 처리 객체 생성
+    signup = login.SignUp(user_id, user_password, email)
     col1, col2 = st.columns([1, 1])  # 버튼을 나란히 배치
     with col1:
         if st.button("회원가입", key="signup_submit_button"):
             if not user_id or not user_password or not email:
                 st.error("모든 필드를 입력해 주세요.")
             else:
-                # 회원가입 처리 객체 생성
-                signup = login.SignUp(user_id, user_password, email)
-
+                if not signup.validate_email(email):
+                    st.error("유효한 이메일 주소를 입력해 주세요.")
+                    return
                 # 비밀번호 길이 체크
                 if not signup.check_length():
                     return  # 비밀번호가 너무 짧으면 더 이상 진행하지 않음
@@ -143,7 +142,6 @@ def signup_page():
     with col2:
         if st.button("뒤로가기", key="signup_back_button"):
             go_back()  # 뒤로가기 로직 호출
-
 
 #로그인 후 홈화면
 def after_login():
