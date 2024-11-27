@@ -2,3 +2,5 @@ bcrypt
 re
 smtplib
 string
+folium
+st_folium
