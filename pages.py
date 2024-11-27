@@ -120,7 +120,6 @@ def signup_page():
     user_password = st.text_input("비밀번호", type='password')
     email = st.text_input("이메일")
 
-    # 가입 버튼 및 뒤로가기 버튼 배치
     col1, col2 = st.columns([1, 1])  # 버튼을 나란히 배치
     with col1:
         if st.button("회원가입", key="signup_submit_button"):
@@ -140,11 +139,11 @@ def signup_page():
 
                 # 모든 검증을 통과하면 회원가입 진행
                 signup.sign_up_event()
-                st.success("회원가입이 완료되었습니다!")
 
     with col2:
         if st.button("뒤로가기", key="signup_back_button"):
             go_back()  # 뒤로가기 로직 호출
+
 
 #로그인 후 홈화면
 def after_login():
