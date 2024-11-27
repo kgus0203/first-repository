@@ -8,6 +8,7 @@ def create_connection():
     conn = sqlite3.connect('zip.db')
     conn.row_factory = sqlite3.Row  # results as dictionary-like
     return conn
+
 class LikeButton:
    def __init__(self):
        self.lk = st.session_state
@@ -48,7 +49,6 @@ class LikeButton:
 
 
    def fetch_liked_posts(self):
-       """ Fetch only posts with likes (like_num > 0). """
        conn = self.create_connection()
        cursor = conn.cursor()
        cursor.execute("SELECT p_id, p_title FROM posting WHERE like_num > 0")
@@ -60,7 +60,6 @@ class LikeButton:
 
 
    def display_liked_posts(self):
-       """ Display only liked posts (like_num > 0). """
        liked_posts = self.fetch_liked_posts()
 
 
@@ -244,6 +243,7 @@ class SetView:
             if st.button("이메일 변경"):
                 self.account.update_email(new_email)
                 st.success("이메일이 변경되었습니다.")
+                st.rerun()
 
             # Profile Picture Upload
             uploaded_file = st.file_uploader("새 프로필 사진 업로드", type=["jpg", "png", "jpeg"])
