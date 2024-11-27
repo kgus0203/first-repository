@@ -1,257 +1,218 @@
 import sqlite3
 import streamlit as st
 
+
 # 데이터베이스 연결 함수
 def create_connection():
     conn = sqlite3.connect('zip.db')
-    conn.row_factory = sqlite3.Row  # 결과를 딕셔너리 형식으로 반환
+    conn.row_factory = sqlite3.Row  # 딕셔너리 형태로 반환
     return conn
 
-
-# UserVO (사용자 정보 클래스)
-class UserVO:
-    def __init__(self, user_id='', user_password='', user_email='', user_seq=None, user_is_online=False, user_mannerscore=0):
-        self.user_id = user_id
-        self.user_password = user_password
-        self.user_email = user_email
-        self.user_seq = user_seq
-        self.user_is_online = user_is_online
-        self.user_mannerscore = user_mannerscore  # 매너 점수
-
-
-# UserDAO (데이터베이스 연동 클래스)
-class UserDAO:
-    # 아이디 중복 체크
-    def check_user_id_exists(self, user_id):
-        connection = create_connection()
-        try:
-            cursor = connection.cursor()
-            query = "SELECT * FROM user WHERE user_id = ?"
-            cursor.execute(query, (user_id,))
-            result = cursor.fetchone()
-            return result is not None
-        except sqlite3.Error as e:
-            st.error(f"DB 오류: {e}")
-        finally:
-            connection.close()
-
-    # 아이디로 사용자 검색
-    def search_user(self, user_id):
-        connection = create_connection()
-        try:
-            cursor = connection.cursor()
-            query = "SELECT * FROM user WHERE user_id = ?"
-            cursor.execute(query, (user_id,))
-            result = cursor.fetchone()
-            return result
-        except sqlite3.Error as e:
-            st.error(f"DB 오류: {e}")
-        finally:
-            connection.close()
-
-    # 사용자 추가
-    def insert_user(self, user):
-        connection = create_connection()
-        try:
-            cursor = connection.cursor()
-            query = "INSERT INTO user (user_id, user_password, user_email, user_is_online, user_mannerscore) VALUES (?, ?, ?, 0, 0)"
-            cursor.execute(query, (user.user_id, user.user_password, user.user_email))
-            connection.commit()
-        except sqlite3.Error as e:
-            st.error(f"DB 오류: {e}")
-        finally:
-            connection.close()
-
-    # 비밀번호 체크 (비밀번호 해시하지 않음)
-    def check_password(self, stored_password, plain_password):
-        return stored_password == plain_password
-
-
-# 로그인 처리 클래스
-class SignIn:
-    def __init__(self, user_id, user_password):
-        self.user_id = user_id
-        self.user_password = user_password
-
-    def sign_in_event(self):
-        dao = UserDAO()
-        result = dao.search_user(self.user_id)
-
-        if result:
-            # 저장된 비밀번호 가져오기
-            stored_password = result['user_password']  # result는 딕셔너리 형태
-            if dao.check_password(stored_password, self.user_password):  # 비밀번호 비교
-                st.success("로그인 성공")
-                return self.user_id
-            else:
-                st.error("비밀번호가 잘못되었습니다.")
+# 내 친구 리스트 기능
+def show_friend_list(user_id):
+    conn = create_connection()
+    try:
+        cursor = conn.cursor()
+        query = "SELECT friend_user_id FROM friend WHERE user_id = ?"
+        cursor.execute(query, (user_id,))
+        friends = cursor.fetchall()
+        if friends:
+            st.title("내 친구 리스트")
+            for friend in friends:
+                st.write(f"- {friend['friend_user_id']}")
         else:
-            st.error("아이디가 존재하지 않습니다.")
-        return False
-
-
-# 친구 목록 조회
-def get_friends(user_id):
-    conn = create_connection()
-    try:
-        cursor = conn.cursor()
-        query = """
-        SELECT u.user_id, u.user_email, u.user_is_online, u.user_mannerscore
-        FROM user u
-        JOIN friend f ON u.user_id = f.friend_user_id
-        WHERE f.user_id = ? AND f.status = 'accepted'
-        """
-        cursor.execute(query, (user_id,))
-        return cursor.fetchall()
+            st.write("친구가 없습니다.")
     except sqlite3.Error as e:
         st.error(f"DB 오류: {e}")
     finally:
         conn.close()
 
-
-# 친구와 매너 점수 표시
-def show_friends(user_id):
-    friends = get_friends(user_id)
-
-    st.title("친구 목록")
-    if not friends:
-        st.write("친구가 없습니다.")
-    else:
-        for friend in friends:
-            online_status = "온라인" if friend['user_is_online'] == 1 else "오프라인"
-            manner_score = friend['user_mannerscore']
-            st.write(f"**친구 ID**: {friend['user_id']} ({online_status})")
-            st.write(f"**이메일**: {friend['user_email']}")
-            st.write(f"**매너 점수**: {manner_score}")
-            st.write("---")
-
-
-# 친구 팔로우 함수
-def follow_friend(user_id, friend_user_id):
+# 친구 추가 기능
+def add_friend(user_id, friend_id):
     conn = create_connection()
     try:
         cursor = conn.cursor()
-        # 친구 요청 상태 추가 (pending 상태로 저장)
-        query = "INSERT INTO friend (user_id, friend_user_id, status) VALUES (?, ?, 'pending')"
-        cursor.execute(query, (user_id, friend_user_id))
+        # 상대방이 회원가입했는지 확인
+        query = "SELECT user_id FROM user WHERE user_id = ?"
+        cursor.execute(query, (friend_id,))
+        user_exists = cursor.fetchone()
+
+        if not user_exists:
+            st.error("없는 ID입니다.")
+            return
+
+        # 중복 신청 방지
+        query = """
+            SELECT * FROM myFriendrequest 
+            WHERE user_id = ? AND requested_user_id = ?
+        """
+        cursor.execute(query, (user_id, friend_id))
+        already_requested = cursor.fetchone()
+
+        if already_requested:
+            st.error("이미 친구 신청을 보냈습니다.")
+            return
+
+        # 친구 신청 추가 (양방향 대기)
+        cursor.execute("INSERT INTO myFriendrequest (user_id, requested_user_id) VALUES (?, ?)", (user_id, friend_id))
+        cursor.execute("INSERT INTO otherRequest (user_id, requester_user_id) VALUES (?, ?)", (friend_id, user_id))
         conn.commit()
-        st.success(f"{friend_user_id}님에게 팔로우 요청을 보냈습니다.")
+        st.success(f"{friend_id}님에게 친구 신청을 보냈습니다.")
+    except sqlite3.Error as e:
+        st.error(f"DB 오류: {e}")
+   
+        # 삽입 후 데이터베이스 확인
+        cursor.execute("SELECT * FROM myFriendrequest WHERE user_id = ? AND requested_user_id = ?", (user_id, friend_id))
+        my_request_check = cursor.fetchall()
+        cursor.execute("SELECT * FROM otherRequest WHERE user_id = ? AND requester_user_id = ?", (friend_id, user_id))
+        other_request_check = cursor.fetchall()
+
+        # 디버깅용 로그 출력
+        st.write(f"myFriendrequest 데이터: {my_request_check}")
+        st.write(f"otherRequest 데이터: {other_request_check}")
+
+        st.success(f"{friend_id}님에게 친구 신청을 보냈습니다.")
     except sqlite3.Error as e:
         st.error(f"DB 오류: {e}")
     finally:
         conn.close()
 
-
-# 친구 요청을 확인하고, 수락 / 거절하는 함수
-def get_follow_requests(user_id):
+# 친구 차단 기능
+def block_friend(user_id, friend_id):
     conn = create_connection()
     try:
         cursor = conn.cursor()
-        query = """
-        SELECT f.user_id, f.friend_user_id
-        FROM friend f
-        WHERE f.friend_user_id = ? AND f.status = 'pending'
-        """
-        cursor.execute(query, (user_id,))
-        return cursor.fetchall()
+        # 친구 리스트에서 삭제 및 차단 리스트로 이동
+        cursor.execute("DELETE FROM friend WHERE user_id = ? AND friend_user_id = ?", (user_id, friend_id))
+        cursor.execute("INSERT INTO block (user_id, blocked_user_id) VALUES (?, ?)", (user_id, friend_id))
+        conn.commit()
+        st.success(f"{friend_id}님을 차단하였습니다.")
     except sqlite3.Error as e:
         st.error(f"DB 오류: {e}")
     finally:
         conn.close()
 
+# 차단 해제 기능
+def unblock_friend(user_id, friend_id):
+    conn = create_connection()
+    try:
+        cursor = conn.cursor()
+        # 차단 리스트에서 삭제 및 친구 리스트로 이동
+        cursor.execute("DELETE FROM block WHERE user_id = ? AND blocked_user_id = ?", (user_id, friend_id))
+        cursor.execute("INSERT INTO friend (user_id, friend_user_id) VALUES (?, ?)", (user_id, friend_id))
+        conn.commit()
+        st.success(f"{friend_id}님을 차단 해제하였습니다.")
+    except sqlite3.Error as e:
+        st.error(f"DB 오류: {e}")
+    finally:
+        conn.close()
 
-# 친구 요청 수락 / 거절
-def handle_follow_request(user_id, friend_user_id, action):
+# 친구 대기 기능
+
+def handle_follow_request(user_id, requester_id, action):
     conn = create_connection()
     try:
         cursor = conn.cursor()
         if action == "accept":
-            query = "UPDATE friend SET status = 'accepted' WHERE user_id = ? AND friend_user_id = ?"
+            # 친구 요청을 수락 (친구 목록에 추가)
+            cursor.execute("INSERT INTO friend (user_id, friend_user_id) VALUES (?, ?)", (user_id, requester_id))
+            cursor.execute("INSERT INTO friend (user_id, friend_user_id) VALUES (?, ?)", (requester_id, user_id))
+            # 요청 삭제
+            cursor.execute("DELETE FROM otherRequest WHERE user_id = ? AND requester_user_id = ?", (user_id, requester_id))
+            conn.commit()
+            st.success(f"{requester_id}님과 친구가 되었습니다.")
         elif action == "reject":
-            query = "UPDATE friend SET status = 'rejected' WHERE user_id = ? AND friend_user_id = ?"
-        cursor.execute(query, (user_id, friend_user_id))
-        conn.commit()
-
-        if action == "accept":
-            st.success(f"{friend_user_id}님을 친구로 수락하였습니다.")
+            # 친구 요청을 거절 (요청 삭제)
+            cursor.execute("DELETE FROM otherRequest WHERE user_id = ? AND requester_user_id = ?", (user_id, requester_id))
+            conn.commit()
+            st.success(f"{requester_id}님의 요청을 거절하였습니다.")
         else:
-            st.success(f"{friend_user_id}님을 친구 요청을 거절하였습니다.")
+            st.error("올바르지 않은 작업입니다.")
+    except sqlite3.Error as e:
+        st.error(f"DB 오류: {e}")
+    finally:
+        conn.close()
+# 친구 대기 상태 조회
+def show_friend_requests(user_id):
+    conn = create_connection()
+    try:
+        cursor = conn.cursor()
+
+        # 내가 보낸 친구 신청 목록
+        st.title("내가 보낸 친구 신청")
+        cursor.execute("SELECT requested_user_id FROM myFriendrequest WHERE user_id = ?", (user_id,))
+        sent_requests = cursor.fetchall()
+        if sent_requests:
+            st.write(f"보낸 요청 데이터: {sent_requests}")  # 디버깅용
+            for request in sent_requests:
+                st.write(f"- {request['requested_user_id']}")
+        else:
+            st.write("보낸 친구 신청이 없습니다.")
+
+        # 내가 받은 친구 신청 목록
+        st.title("나에게 온 친구 신청")
+        cursor.execute("SELECT requester_user_id FROM otherRequest WHERE user_id = ?", (user_id,))
+        received_requests = cursor.fetchall()
+        if received_requests:
+            st.write(f"받은 요청 데이터: {received_requests}")  # 디버깅용
+            for request in received_requests:
+                st.write(f"- {request['requester_user_id']}")
+                col1, col2 = st.columns([1, 1])
+                with col1:
+                    if st.button(f"수락: {request['requester_user_id']}", key=f"accept_{request['requester_user_id']}"):
+                        accept_friend_request(user_id, request['requester_user_id'])
+                with col2:
+                    if st.button(f"거절: {request['requester_user_id']}", key=f"reject_{request['requester_user_id']}"):
+                        reject_friend_request(user_id, request['requester_user_id'])
+        else:
+            st.write("받은 친구 신청이 없습니다.")
     except sqlite3.Error as e:
         st.error(f"DB 오류: {e}")
     finally:
         conn.close()
 
 
-# 메인 페이지
-def main():
-    # 로그인
-    user_id = login()
+# 친구 신청 수락
+def accept_friend_request(user_id, requester_id):
+    conn = create_connection()
+    try:
+        cursor = conn.cursor()
+        # 친구 리스트로 이동
+        cursor.execute("INSERT INTO friend (user_id, friend_user_id) VALUES (?, ?)", (user_id, requester_id))
+        cursor.execute("INSERT INTO friend (user_id, friend_user_id) VALUES (?, ?)", (requester_id, user_id))
+        # 요청 삭제
+        cursor.execute("DELETE FROM otherRequest WHERE user_id = ? AND requester_user_id = ?", (user_id, requester_id))
+        conn.commit()
+        st.success(f"{requester_id}님과 친구가 되었습니다.")
+    except sqlite3.Error as e:
+        st.error(f"DB 오류: {e}")
+    finally:
+        conn.close()
 
-    if user_id:
-        # 로그인 성공 후 친구 목록 보기
-        show_friends(user_id)
+# 친구 신청 거절
+def reject_friend_request(user_id, requester_id):
+    conn = create_connection()
+    try:
+        cursor = conn.cursor()
+        # 요청 삭제
+        cursor.execute("DELETE FROM otherRequest WHERE user_id = ? AND requester_user_id = ?", (user_id, requester_id))
+        conn.commit()
+        st.success(f"{requester_id}님의 요청을 거절하였습니다.")
+    except sqlite3.Error as e:
+        st.error(f"DB 오류: {e}")
+    finally:
+        conn.close()
 
-        # 친구 팔로우 입력
-        friend_user_id = st.text_input("팔로우할 친구의 사용자 ID 입력:")
-        if st.button("친구 팔로우"):
-            if friend_user_id:
-                follow_friend(user_id, friend_user_id)
-            else:
-                st.error("친구의 사용자 ID를 입력해 주세요.")
+# 친구 삭제 기능
+def delete_friend(user_id, friend_id):
+    conn = create_connection()
+    try:
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM friend WHERE user_id = ? AND friend_user_id = ?", (user_id, friend_id))
+        conn.commit()
+        st.success(f"{friend_id}님을 친구 목록에서 삭제하였습니다.")
+    except sqlite3.Error as e:
+        st.error(f"DB 오류: {e}")
+    finally:
+        conn.close()
 
-        # 친구 요청 보기 및 수락 / 거절
-        requests = get_follow_requests(user_id)
-        if requests:
-            st.title("친구 요청 목록")
-            for request in requests:
-                st.write(f"**{request['user_id']}님**으로부터 팔로우 요청이 왔습니다.")
-                accept_button = st.button(f"수락 {request['user_id']}")
-                reject_button = st.button(f"거절 {request['user_id']}")
-
-                if accept_button:
-                    handle_follow_request(user_id, request['user_id'], "accept")
-                elif reject_button:
-                    handle_follow_request(user_id, request['user_id'], "reject")
-        else:
-            st.write("팔로우 요청이 없습니다.")
-    else:
-        st.warning("로그인 후 사용해 주세요.")
-
-
-# 로그인 페이지
-def login():
-    page = st.sidebar.selectbox("페이지 선택", ["로그인", "회원가입"])
-
-    if page == "회원가입":
-        st.title("회원가입")
-        user_id = st.text_input("아이디")
-        user_password = st.text_input("비밀번호", type='password')
-        email = st.text_input("이메일")
-
-        if st.button("회원가입"):
-            # 입력 값 검증 (간단한 예시)
-            if not user_id or not user_password or not email:
-                st.error("모든 필드를 입력해 주세요.")
-            else:
-                user_info = UserVO(user_id=user_id, user_password=user_password, user_email=email)
-                signup = SignUp(user_id, user_password, email)
-                signup.sign_up_event()
-
-    elif page == "로그인":
-        st.title("로그인")
-        user_id = st.text_input("아이디")
-        user_password = st.text_input("비밀번호", type='password')
-
-        if st.button("로그인"):
-            # 입력 값 검증
-            if not user_id or not user_password:
-                st.error("아이디와 비밀번호를 입력해 주세요.")
-            else:
-                sign_in = SignIn(user_id, user_password)
-                return sign_in.sign_in_event()
-
-    return None
-
-
-if __name__ == "__main__":
-    main()
