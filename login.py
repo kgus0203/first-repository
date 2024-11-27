@@ -112,12 +112,14 @@ class SignUp:
     def check_length(self):
         if len(self.user.user_password) < 8:
             st.error("비밀번호는 최소 8자 이상이어야 합니다.")
-            return
+            return False
+        return True
     def check_user(self):
         dao = UserDAO()
         if dao.check_user_id_exists(self.user.user_id):
             st.error("이미 사용 중인 아이디입니다.")
-            return
+            return False
+        return True
 
 
 # 로그인 처리 클래스
@@ -213,4 +215,3 @@ class UserManager:
         import random
         import string
         return ''.join(random.choices(string.ascii_letters + string.digits, k=8))
-
