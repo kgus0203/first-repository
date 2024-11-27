@@ -2,7 +2,16 @@ import streamlit as st
 import sqlite3
 from typing import Dict
 import os
+from localization import Localization
 
+# 초기화
+if 'localization' not in st.session_state:
+    st.session_state.localization = Localization(lang ='ko')  # 기본 언어는 한국어로 설정됨
+# 현재 언어 설정 초기화
+if 'current_language' not in st.session_state:
+    st.session_state.current_language = 'ko'  # 기본값으로 한국어 설정
+
+localization = st.session_state.localization
 
 def create_connection():
     conn = sqlite3.connect('zip.db')
@@ -93,18 +102,6 @@ class ThemeManager:
         if "themes" not in self.th:
             self.th.themes = {
                 "current_theme": self.get_saved_theme(),  # Load saved theme from DB or default to light
-                "light": {
-                    "theme.base": "dark",
-                    "theme.backgroundColor": "black",
-                    "theme.textColor": "white",
-                    "button_face": "어두운 모드 🌜"
-                },
-                "dark": {
-                    "theme.base": "light",
-                    "theme.backgroundColor": "white",
-                    "theme.textColor": "#0a1464",
-                    "button_face": "밝은 모드 🌞"
-                }
             }
 
     def get_saved_theme(self):
@@ -141,13 +138,35 @@ class ThemeManager:
         st.rerun()  # UI 새로고침
 
     def render_button(self):
+        # 동적으로 버튼 텍스트 가져오기
         current_theme = self.th.themes["current_theme"]
-        button_label = self.th.themes[current_theme]["button_face"]
+        button_label = (
+            localization.get_text("dark_mode")
+            if current_theme == "light"
+            else localization.get_text("light_mode")
+        )
 
         # 버튼 렌더링 및 클릭 이벤트 처리
         if st.button(button_label, use_container_width=True):
             self.change_theme()
-            st.rerun()
+
+    def select_language(self):
+        lang_options = ['ko', 'en', 'jp']  # 지원하는 언어 목록
+
+        # 드롭다운을 왼쪽에 배치
+        selected_lang = st.selectbox(
+            localization.get_text("select_language"),  # "언어 선택" 문자열을 로컬라이제이션에서 가져옴
+            lang_options,
+            index=lang_options.index(st.session_state.current_language),  # 현재 언어에 맞게 기본값 설정
+            key="language_select",
+            help=localization.get_text("choose_language")  # 툴팁 문자열
+        )
+
+        if st.session_state.current_language != selected_lang:
+            st.session_state.current_language = selected_lang  # 선택한 언어로 변경
+            st.session_state.localization.lang = selected_lang  # Localization 객체의 언어도 변경
+            st.rerun()  # 페이지를 다시 로드
+
 
 class UserProfile:
     def __init__(self, upload_folder="profile_pictures"):
@@ -225,7 +244,6 @@ class SetView:
         self.account = Account(user_id=user_id, user_email=user_email)
         self.user_profile = UserProfile()
         self.theme_manager = ThemeManager()
-        self.like_button = LikeButton()
 
     def render_user_profile(self):
         user_info = self.account.get_user_info()
@@ -233,38 +251,133 @@ class SetView:
         self.user_profile.display_profile(user_info["user_id"])
 
         # Edit Profile Button (popup simulation)
-        with st.expander("내 정보 수정하기"):
+        with st.expander(localization.get_text("edit_my_info")):
             # Change Email
-            new_email = st.text_input("새 이메일 주소", value=user_info["user_email"])
-            if st.button("이메일 변경"):
+            new_email = st.text_input(localization.get_text("new_email_address"), value=user_info["user_email"])
+            if st.button(localization.get_text("change_email")):
                 self.account.update_email(new_email)
-                st.success("이메일이 변경되었습니다.")
+                st.success(localization.get_text("email_updated"))
                 st.rerun()
 
             # Profile Picture Upload
-            uploaded_file = st.file_uploader("새 프로필 사진 업로드", type=["jpg", "png", "jpeg"])
+            uploaded_file = st.file_uploader(localization.get_text("upload_new_profile_picture"), type=["jpg", "png", "jpeg"])
             if uploaded_file is not None:
                 image_path = self.user_profile.save_file(uploaded_file)
                 self.user_profile.update_profile_picture(user_info["user_id"], image_path)
-                st.success("프로필 사진이 성공적으로 업데이트되었습니다.")
+                st.success(localization.get_text("profile_picture_updated"))
                 st.rerun()
 
     def render_alarm_settings(self):
-
-        alarm_enabled = st.button("알람 설정", use_container_width=True)
+        alarm_enabled = st.button(localization.get_text("set_alarm"), use_container_width=True)
         if alarm_enabled:
-            st.write("알람이 설정되었습니다.")
+            st.write(localization.get_text("alarm_set"))
         else:
-            st.write("알람이 해제되었습니다.")
-
-
+            st.write(localization.get_text("alarm_disabled"))
 
     def render_posts(self):
         # Display liked posts toggle button
+        with st.expander(localization.get_text("favorites"), icon='💗'):
+            st.write(localization.get_text("no_liked_posts"))
 
-        with st.expander('관심목록',icon='💗'):
-            self.like_button.display_liked_posts()
 
 
-if __name__ == "__main__":
-    main()
+
+# 페이지 전환 함수
+def change_page(page_name):
+    if "history" not in st.session_state:
+        st.session_state["history"] = []
+    if st.session_state["current_page"] != page_name:
+        st.session_state["history"].append(st.session_state["current_page"])
+    st.session_state["current_page"] = page_name
+    st.session_state.localization = st.session_state.localization  # 언어 변경 후 localization 업데이트
+
+    st.rerun()
+
+
+# Main function
+def main():
+    st.title("My Page")
+
+    # Create the SetView object and render the views
+    view = SetView()
+    view.render_user_profile()
+    view.render_alarm_settings()
+    theme_manager = ThemeManager()
+    theme_manager.render_button()
+    theme_manager.select_language()
+    view.render_posts()
+
+
+if __name__ == "__main__":295
+296
+297
+298
+299
+300
+301
+302
+303
+304
+305
+306
+307
+308
+309
+310
+311
+312
+313
+314
+315
+        self.theme_manager = ThemeManager()
+
+    def render_user_profile(self):
+        user_info = self.account.get_user_info()
+        # Display user profile
+        self.user_profile.display_profile(user_info["user_id"])
+
+        # Edit Profile Button (popup simulation)
+        with st.expander(localization.get_text("edit_my_info")):
+            # Change Email
+            new_email = st.text_input(localization.get_text("new_email_address"), value=user_info["user_email"])
+            if st.button(localization.get_text("change_email")):
+                self.account.update_email(new_email)
+                st.success(localization.get_text("email_updated"))
+                st.rerun()
+
+            # Profile Picture Upload
+            uploaded_file = st.file_uploader(localization.get_text("upload_new_profile_picture"), type=["jpg", "png", "jpeg"])
+            if uploaded_file is not None:
+                image_path = self.user_profile.save_file(uploaded_file)
+                self.user_profile.update_profile_picture(user_info["user_id"], image_path)
+                st.success(localization.get_text("profile_picture_updated"))
+                st.rerun()
+
+    def render_alarm_settings(self):
+        alarm_enabled = st.button(localization.get_text("set_alarm"), use_container_width=True)
+        if alarm_enabled:
+            st.write(localization.get_text("alarm_set"))
+        else:
+            st.write(localization.get_text("alarm_disabled"))
+
+    def render_posts(self):
+        # Display liked posts toggle button
+        with st.expander(localization.get_text("favorites"), icon='💗'):
+            st.write(localization.get_text("no_liked_posts"))
+
+
+
+
+# 페이지 전환 함수
+def change_page(page_name):
+    if "history" not in st.session_state:
+        st.session_state["history"] = []
+    if st.session_state["current_page"] != page_name:
+        st.session_state["history"].append(st.session_state["current_page"])
+    st.session_state["current_page"] = page_name
+    st.session_state.localization = st.session_state.localization  # 언어 변경 후 localization 업데이트
+
+    st.rerun()
+
+
+
