@@ -31,12 +31,35 @@ class LocationGet:
         conn.close()
         return locations
 
+    def save_or_get_location(self, name, address, latitude, longitude):
+        conn = self.create_connection()
+        cursor = conn.cursor()
+
+        # 위치가 이미 존재하는지 확인
+        cursor.execute("""
+               SELECT location_id FROM locations 
+               WHERE location_name = ? AND address_name = ?
+           """, (name, address))
+        result = cursor.fetchone()
+
+        if result:
+            return result[0]  # 이미 존재하면 location_id 반환
+
+        # 새로운 위치 저장
+        cursor.execute("""
+               INSERT INTO locations (location_name, address_name, latitude, longitude)
+               VALUES (?, ?, ?, ?)
+           """, (name, address, latitude, longitude))
+        conn.close()
+
+        return cursor.lastrowid  # 새로 생성된 location_id 반환
+
 
 # 위치 검색 및 지도 표시 클래스
 class LocationSearch:
     def __init__(self):
         self.db_manager = LocationGet()
-
+        self.selected_location_id = None
     def search_location(self, query):
         url = f"https://dapi.kakao.com/v2/local/search/keyword.json"
         headers = {
@@ -99,12 +122,15 @@ class LocationSearch:
                         st.write(f"장소 이름: {name}")
                         st.write(f"주소: {address}")
                         # Here you would save to your database
-                        # self.db_manager.save_location(name, address, latitude, longitude)
-
-            # Show map with st.map
+                        self.selected_location_id = self.db_manager.save_or_get_location(
+                            name, address, latitude, longitude)
             if location_data:
                 df = pd.DataFrame(location_data)
                 st.map(df[['latitude', 'longitude']])
+
+    def get_selected_location_id(self):
+        """선택된 location_id를 반환"""
+        return self.selected_location_id
 
 class PostManager:
     def __init__(self, upload_folder='uploaded_files'):
@@ -112,7 +138,6 @@ class PostManager:
         if not os.path.exists(upload_folder):
             os.makedirs(upload_folder)
         self.locations_df = None
-        self.map = None
         if "posts" not in st.session_state:
             st.session_state.posts = []
             self.fetch_and_store_posts()
@@ -123,16 +148,26 @@ class PostManager:
         conn.row_factory = sqlite3.Row  # Return results as dictionaries
         return conn
 
-    # locations에 저장된 정보를 불러옴
-    def fetch_location_data(self):
+    def fetch_location_data(self, p_id):
+        # SQLite 데이터베이스 연결
         conn = sqlite3.connect('zip.db')
+
+        # SQL 쿼리: p_id에 해당하는 위치 데이터만 가져옴
         query = """
-        SELECT l.location_name, l.address_name, l.latitude, l.longitude
-        FROM posting p
-        JOIN locations l ON p.p_location = l.location_id
+            SELECT l.location_name, l.address_name, l.latitude, l.longitude
+            FROM posting p
+            JOIN locations l ON p.p_location = l.location_id
+            WHERE p.p_id = ?
         """
-        self.locations_df = pd.read_sql(query, conn)
+
+        # 쿼리를 실행하며 p_id 전달
+        self.locations_df = pd.read_sql_query(query, conn, params=(p_id,))
+
+        # 연결 닫기
         conn.close()
+
+        # 결과 반환
+        return self.locations_df
 
     def create_map_with_markers(self):
         # Check if the DataFrame is empty
@@ -152,29 +187,26 @@ class PostManager:
         if self.locations_df is None or self.locations_df.empty:
             st.warning('위치 등록이 되어있지 않습니다')
             return
-
-        # Display the map with st.map (using latitude and longitude columns)
-        st.map(self.locations_df[['latitude', 'longitude']], key=key)
-
+            # Display the map with st.map (using latitude and longitude columns)
+        st.map(self.locations_df[['latitude', 'longitude']])
 
     # posting에 디비 저장 , 사진 업로드 한 개 밖에 못함
-    def add_post(self, title, content, image_file, file_file, category):
+    def add_post(self, title, content, image_file, file_file, location, category):
         conn = self.create_connection()
         cursor = conn.cursor()
-
         # Save files if they exist
         image_path = self.save_file(image_file) if image_file else ''
         file_path = self.save_file(file_file) if file_file else ''
 
         # Insert query (p_location is omitted, it will be auto-incremented)
         query = """
-        INSERT INTO posting (p_title, p_content, p_image_path, file_path, p_category, upload_date)
-        VALUES (?, ?, ?, ?, ?, ?)
+        INSERT INTO posting (p_title, p_content, p_image_path, file_path,p_location, p_category, upload_date)
+        VALUES (?, ?, ?, ?, ?, ?, ? )
         """
         upload_date = modify_date = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
         # Execute query without the p_location field
-        cursor.execute(query, (title, content, image_path, file_path, category, upload_date))
+        cursor.execute(query, (title, content, image_path, file_path, location, category,  upload_date))
         conn.commit()
         conn.close()
 
@@ -363,8 +395,7 @@ class PostManager:
                 # 수정 버튼 클릭 시
                 self.edit_post(post['p_id'])
 
-            # 데이터 불러오기 (위치 정보)
-            self.fetch_location_data()
+            self.fetch_location_data(post['p_id'])
 
             # 위치 데이터가 존재할 때만 지도 생성
             if self.locations_df is not None and not self.locations_df.empty:
@@ -375,6 +406,50 @@ class PostManager:
             # 게시물 추가 정보
             st.write(f"**등록 날짜**: {post['upload_date']}, **수정 날짜**: {post['modify_date']}")
             st.write("---")
+
+    def get_post_by_id(self, post_id):
+        conn = self.create_connection()
+        conn.row_factory = sqlite3.Row  # 결과를 딕셔너리 형태로 반환
+        cursor = conn.cursor()
+
+        # SQL 쿼리 작성 및 실행
+        query = "SELECT * FROM posting WHERE p_id = ?"
+        cursor.execute(query, (post_id,))
+
+        # 결과 가져오기 (fetchone으로 단일 행만 반환)
+        row = cursor.fetchone()
+
+        # 연결 종료
+        conn.close()
+
+        # 결과 반환 (없을 경우 None)
+        return dict(row) if row else None
+
+    def display_post(self, post_id):
+        # 특정 게시물 가져오기
+        post = self.get_post_by_id(post_id)
+
+        if post:
+            # 게시물 정보 출력
+            st.write(f"**Post ID**: {post['p_id']}")
+            st.write(f"**Title**: {post['p_title']}")
+            st.write(f"**Content**: {post['p_content']}")
+
+            # 이미지 출력
+            if post.get('p_image_path') and os.path.exists(post['p_image_path']):
+                st.image(post['p_image_path'], width=200)
+
+            # 파일 출력
+            if post.get('file_path') and os.path.exists(post['file_path']):
+                st.write("**Filename**:", os.path.basename(post['file_path']))
+                st.write(f"**File size**: {os.path.getsize(post['file_path'])} bytes")
+                st.markdown(
+                    f"[Download File]({post['file_path']})",
+                    unsafe_allow_html=True
+                )
+
+        else:
+            st.error("해당 게시물을 찾을 수 없습니다.")
 
     # 홈 화면 게시글 배치
     def display_posts_on_home(self):
@@ -393,16 +468,20 @@ class PostManager:
                     post = posts[i + j]  # 현재 포스트 데이터
                     with col:
                         # 제목 출력
+
                         st.subheader(post["p_title"])
 
                         # 이미지 출력 (있는 경우)
                         if post["p_image_path"]:
                             try:
-                                st.image(post["p_image_path"], caption=post["p_title"], use_column_width=True)
+                                st.image(post["p_image_path"], use_container_width=True)
+                                with st.expander('더보기'):
+                                    self.display_post(post["p_id"])
                             except Exception as e:
                                 st.error(f"이미지를 불러오는 데 실패했습니다: {e}")
                         else:
                             st.write("이미지가 없습니다.")
+
 
 # Initialize PostManager
 post_manager = PostManager()
