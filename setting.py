@@ -266,19 +266,5 @@ class SetView:
             self.like_button.display_liked_posts()
 
 
-# Main function
-def main():
-    st.title("My Page")
-
-    # Create the SetView object and render the views
-    view = SetView()
-    view.render_user_profile()
-    view.render_alarm_settings()
-    theme_manager = ThemeManager()
-    theme_manager.render_button()
-
-    view.render_posts()
-
-
 if __name__ == "__main__":
     main()
