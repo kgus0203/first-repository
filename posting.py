@@ -324,9 +324,31 @@ class PostManager:
             # 게시물 정보 출력
             st.write(f"Post ID: {post['p_id']}, Title: {post['p_title']}")
             st.write(f"Content: {post['p_content']}")
+            if post.get('p_image_path') and os.path.exists(post['p_image_path']):
+                st.image(post['p_image_path'], width=200)
+            else:
+                pass
+
+            if post.get('p_file_path') and os.path.exists(post['p_file_path']):
+                # Read the file in binary mode
+                with open(post['p_file_path'], 'rb') as f:
+                    bytes_data = f.read()
+
+                # Display the file name
+                st.write("Filename:", os.path.basename(post['p_file_path']))
+
+                # Show the file size
+                st.write(f"File size: {len(bytes_data)} bytes")
+
+                # Provide a download link
+                st.write(f"파일을 다운로드하려면 [여기 클릭]({post['p_file_path']})")
+            else:
+                pass
+
+            self.display_like_button(post['p_id'])
 
             # 좋아요 버튼
-            self.display_like_button(post['p_id'])
+            self.display_like_button(f"like_{post['p_id']}")
 
             # 게시물 삭제 버튼
             if st.button(f"삭제", key=f"delete_{post['p_id']}", use_container_width=True):
