@@ -103,23 +103,36 @@ def block_friend(user_id, friend_id):
     if user_id == friend_id:
         st.error("자신을 차단할 수 없습니다.")
         return
+    
     conn = create_connection()
     try:
         cursor = conn.cursor()
+        
+        # user 테이블에서 해당 ID 존재 여부 확인
+        query = "SELECT user_id FROM user WHERE user_id = ?"
+        cursor.execute(query, (friend_id,))
+        user_exists = cursor.fetchone()
+        
+        if not user_exists:
+            st.error("없는 ID입니다.")  # 해당 ID가 user 테이블에 없을 경우
+            return
+        
         # 이미 차단했는지 확인
         query = "SELECT * FROM block WHERE user_id = ? AND blocked_user_id = ?"
         cursor.execute(query, (user_id, friend_id))
         already_blocked = cursor.fetchone()
+        
         if already_blocked:
             st.error("이미 차단된 사용자입니다.")
             return
 
-        # 친구 목록에서 삭제
+        # 친구 목록에서 삭제 (차단된 경우 친구에서 제거)
         cursor.execute("DELETE FROM friend WHERE user_id = ? AND friend_user_id = ?", (user_id, friend_id))
 
-        # 차단 목록에 추가
+        # 차단 테이블에 추가
         cursor.execute("INSERT INTO block (user_id, blocked_user_id) VALUES (?, ?)", (user_id, friend_id))
         conn.commit()
+        
         st.success(f"{friend_id}님을 차단하였습니다.")
     except sqlite3.Error as e:
         st.error(f"DB 오류: {e}")
