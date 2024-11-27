@@ -153,7 +153,7 @@ def create_db():
 
 
    # posting 테이블
-   cursor.execute("""
+  cursor.execute("""
    CREATE TABLE IF NOT EXISTS posting (
        p_id INTEGER PRIMARY KEY AUTOINCREMENT,
        p_title TEXT NOT NULL,
