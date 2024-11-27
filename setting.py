@@ -96,16 +96,12 @@ class ThemeManager:
                 "light": {
                     "theme.base": "dark",
                     "theme.backgroundColor": "black",
-                    "theme.primaryColor": "#c98bdb",
-                    "theme.secondaryBackgroundColor": "#5591f5",
                     "theme.textColor": "white",
                     "button_face": "어두운 모드 🌜"
                 },
                 "dark": {
                     "theme.base": "light",
                     "theme.backgroundColor": "white",
-                    "theme.primaryColor": "#5591f5",
-                    "theme.secondaryBackgroundColor": "#82E1D7",
                     "theme.textColor": "#0a1464",
                     "button_face": "밝은 모드 🌞"
                 }
