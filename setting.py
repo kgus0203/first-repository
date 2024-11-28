@@ -99,10 +99,39 @@ class Account:
 class ThemeManager:
     def __init__(self):
         self.th = st.session_state
+        # themes 딕셔너리 초기화
         if "themes" not in self.th:
             self.th.themes = {
-                "current_theme": self.get_saved_theme(),  # Load saved theme from DB or default to light
+                "current_theme": self.get_saved_theme(),  # 기본 테마 설정
+                "light": {  # Light 테마
+                    "theme.base": "light",
+                    "theme.backgroundColor": "white",
+                    "theme.textColor": "black",
+                    "button_face": localization.get_text("dark_mode")  # 다크 모드 버튼 텍스트
+                },
+                "dark": {  # Dark 테마
+                    "theme.base": "dark",
+                    "theme.backgroundColor": "black",
+                    "theme.textColor": "white",
+                    "button_face": localization.get_text("light_mode")  # 라이트 모드 버튼 텍스트
+                }
             }
+        else:
+            # themes 딕셔너리에 'light'와 'dark'가 없으면 추가
+            if "light" not in self.th.themes:
+                self.th.themes["light"] = {
+                    "theme.base": "light",
+                    "theme.backgroundColor": "white",
+                    "theme.textColor": "black",
+                    "button_face": localization.get_text("dark_mode")
+                }
+            if "dark" not in self.th.themes:
+                self.th.themes["dark"] = {
+                    "theme.base": "dark",
+                    "theme.backgroundColor": "black",
+                    "theme.textColor": "white",
+                    "button_face": localization.get_text("light_mode")
+                }
 
     def get_saved_theme(self):
         # 저장된 테마 가져오기
@@ -111,7 +140,8 @@ class ThemeManager:
         cursor.execute('SELECT current_theme FROM settings WHERE id=1')
         theme = cursor.fetchone()
         conn.close()
-        return theme[0] if theme else 'dark'
+        # 반환값이 유효한 테마인지 확인
+        return theme[0] if theme and theme[0] in ["light", "dark"] else "dark"
 
     def save_theme(self, theme):
         # 현재 테마를 데이터베이스에 저장
@@ -132,10 +162,10 @@ class ThemeManager:
             if key.startswith("theme"):
                 st._config.set_option(key, value)
 
-        # 데이터베이스 저장 및 세션 상태 업데이트
-        self.save_theme(new_theme)
+        # 테마 업데이트 및 저장
         self.th.themes["current_theme"] = new_theme
-        st.rerun()  # UI 새로고침
+        self.save_theme(new_theme)
+        st.rerun()
 
     def render_button(self):
         # 동적으로 버튼 텍스트 가져오기
@@ -309,55 +339,5 @@ def main():
 
 
 if __name__ == "__main__":
-
-        self.theme_manager = ThemeManager()
-
-def render_user_profile(self):
-        user_info = self.account.get_user_info()
-        # Display user profile
-        self.user_profile.display_profile(user_info["user_id"])
-
-        # Edit Profile Button (popup simulation)
-        with st.expander(localization.get_text("edit_my_info")):
-            # Change Email
-            new_email = st.text_input(localization.get_text("new_email_address"), value=user_info["user_email"])
-            if st.button(localization.get_text("change_email")):
-                self.account.update_email(new_email)
-                st.success(localization.get_text("email_updated"))
-                st.rerun()
-
-            # Profile Picture Upload
-            uploaded_file = st.file_uploader(localization.get_text("upload_new_profile_picture"), type=["jpg", "png", "jpeg"])
-            if uploaded_file is not None:
-                image_path = self.user_profile.save_file(uploaded_file)
-                self.user_profile.update_profile_picture(user_info["user_id"], image_path)
-                st.success(localization.get_text("profile_picture_updated"))
-                st.rerun()
-
-def render_alarm_settings(self):
-        alarm_enabled = st.button(localization.get_text("set_alarm"), use_container_width=True)
-        if alarm_enabled:
-            st.write(localization.get_text("alarm_set"))
-        else:
-            st.write(localization.get_text("alarm_disabled"))
-
-def render_posts(self):
-        # Display liked posts toggle button
-        with st.expander(localization.get_text("favorites"), icon='💗'):
-            st.write(localization.get_text("no_liked_posts"))
-
-
-
-
-# 페이지 전환 함수
-def change_page(page_name):
-    if "history" not in st.session_state:
-        st.session_state["history"] = []
-    if st.session_state["current_page"] != page_name:
-        st.session_state["history"].append(st.session_state["current_page"])
-    st.session_state["current_page"] = page_name
-    st.session_state.localization = st.session_state.localization  # 언어 변경 후 localization 업데이트
-
-    st.rerun()
-
+    main()
 
