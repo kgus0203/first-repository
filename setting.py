@@ -312,7 +312,7 @@ if __name__ == "__main__":
 
         self.theme_manager = ThemeManager()
 
-    def render_user_profile(self):
+def render_user_profile(self):
         user_info = self.account.get_user_info()
         # Display user profile
         self.user_profile.display_profile(user_info["user_id"])
@@ -334,14 +334,14 @@ if __name__ == "__main__":
                 st.success(localization.get_text("profile_picture_updated"))
                 st.rerun()
 
-    def render_alarm_settings(self):
+def render_alarm_settings(self):
         alarm_enabled = st.button(localization.get_text("set_alarm"), use_container_width=True)
         if alarm_enabled:
             st.write(localization.get_text("alarm_set"))
         else:
             st.write(localization.get_text("alarm_disabled"))
 
-    def render_posts(self):
+def render_posts(self):
         # Display liked posts toggle button
         with st.expander(localization.get_text("favorites"), icon='💗'):
             st.write(localization.get_text("no_liked_posts"))
@@ -359,6 +359,5 @@ def change_page(page_name):
     st.session_state.localization = st.session_state.localization  # 언어 변경 후 localization 업데이트
 
     st.rerun()
-
 
 
