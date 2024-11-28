@@ -1,5 +1,5 @@
 import sqlite3
-
+#들여쓰기 맞춰두었습니다
 
 def create_db():
    conn = sqlite3.connect('zip.db')
@@ -25,7 +25,7 @@ def create_db():
 
 
     # friend 테이블 (친구 목록)
-    cursor.execute("""
+   cursor.execute("""
     CREATE TABLE IF NOT EXISTS friend (
         friend_id INTEGER PRIMARY KEY AUTOINCREMENT,
         user_id TEXT NOT NULL,
@@ -36,7 +36,7 @@ def create_db():
     """)
 
     # block 테이블 (차단 목록)
-    cursor.execute("""
+   cursor.execute("""
     CREATE TABLE IF NOT EXISTS block (
         block_id INTEGER PRIMARY KEY AUTOINCREMENT,
         user_id TEXT NOT NULL,
@@ -47,7 +47,7 @@ def create_db():
     """)
 
     # myFriendrequest 테이블 (내가 보낸 친구 신청 목록)
-    cursor.execute("""
+   cursor.execute("""
     CREATE TABLE IF NOT EXISTS myFriendrequest (
         request_id INTEGER PRIMARY KEY AUTOINCREMENT,
         user_id TEXT NOT NULL,
@@ -58,7 +58,7 @@ def create_db():
     """)
 
     # otherRequest 테이블 (다른 사람이 보낸 친구 신청 목록)
-    cursor.execute("""
+   cursor.execute("""
     CREATE TABLE IF NOT EXISTS otherRequest (
         request_id INTEGER PRIMARY KEY AUTOINCREMENT,
         user_id TEXT NOT NULL,
@@ -153,7 +153,7 @@ def create_db():
 
 
    # posting 테이블
-  cursor.execute("""
+   cursor.execute("""
    CREATE TABLE IF NOT EXISTS posting (
        p_id INTEGER PRIMARY KEY AUTOINCREMENT,
        p_title TEXT NOT NULL,
