@@ -308,27 +308,8 @@ def main():
     view.render_posts()
 
 
-if __name__ == "__main__":295
-296
-297
-298
-299
-300
-301
-302
-303
-304
-305
-306
-307
-308
-309
-310
-311
-312
-313
-314
-315
+if __name__ == "__main__":
+
         self.theme_manager = ThemeManager()
 
     def render_user_profile(self):
