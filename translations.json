@@ -2,7 +2,7 @@
     "ko": {
         "dark_mode": "어두운 모드 🌜",
         "light_mode": "밝은 모드 🌞",
-        "select_language": "언어 선택",
+        "select_language": "언어 선택 🌐",
         "choose_language": "언어를 선택하세요.",
         "edit_my_info": "내 정보 수정",
         "new_email_address": "새 이메일 주소",
@@ -32,7 +32,7 @@
         "login_button": "로그인",
         "signup_button": "회원가입",
         "forgot_button": "ID/PW 찾기",
-        "id_pw_change_title": "<ID/PW 변경>",
+        "id_pw_change_title": "ID/PW 변경",
         "no_user_error": "사용자 정보가 없습니다. 다시 로그인해주세요.",
         "select_change_action": "변경할 항목을 선택하세요",
         "change_id": "ID 변경",
@@ -59,7 +59,7 @@
         "friend_management": "친구 관리",
         "my_friend_list_button": "내 친구 리스트",
         "my_friend_list_title": "내 친구 리스트",
-        "back_button": "뒤로가기",
+        "back_button": "뒤로가기 ↩️",
         "enter_id_prompt": "ID를 입력하세요:",
         "send_friend_request_button": "친구 요청 보내기",
         "friend_requests_button": "친구 대기",
@@ -94,14 +94,22 @@
         "email_input_prompt": "이메일을 입력하세요:",
         "confirm_button": "확인",
         "password_recovery_email_sent": "비밀번호 복구 메일을 전송했습니다",
-        "email_not_registered_warning": "등록되지 않은 이메일입니다."
+        "email_not_registered_warning": "등록되지 않은 이메일입니다.",
+        "Recommended Restaurant Posts": "추천 맛집 포스트",
+        "group_button": "그룹",
+        "login_title1": "로그인",
+        "group_page_title": "그룹 페이지",
+        "create_group_button": "그룹 생성 🧑‍🤝‍🧑",
+        "search_group_button": "그룹 검색 🔍",
+        "login_required_error": "로그인이 필요합니다.",
+        "no_joined_groups": "참여 중인 그룹이 없습니다."
 
 
     },
     "en": {
         "dark_mode": "Dark Mode 🌜",
         "light_mode": "Light Mode 🌞",
-        "select_language": "Select Language",
+        "select_language": "Select Language 🌐",
         "choose_language": "Choose a language.",
         "edit_my_info": "Edit My Info",
         "new_email_address": "New Email Address",
@@ -133,7 +141,7 @@
         "login_button": "Login",
         "signup_button": "Sign Up",
         "forgot_button": "Find ID/PW",
-        "id_pw_change_title": "<ID/PW Change>",
+        "id_pw_change_title": "ID/PW Change",
         "no_user_error": "User information not found. Please log in again.",
         "select_change_action": "Select an item to change",
         "change_id": "Change ID",
@@ -173,7 +181,7 @@
         "post_register_button": "Register Post",
         "post_register_success": "Post has been registered.",
         "post_register_error": "Please enter both title and content.",
-        "back_button": "Back",
+        "back_button": "Back ↩️",
         "edit_post_header": "Edit Post",
         "edit_post_id_input": "Edit Post ID",
         "location_id_input": "Location ID",
@@ -193,14 +201,22 @@
         "email_input_prompt": "Enter your email:",
         "confirm_button": "Confirm",
         "password_recovery_email_sent": "Password recovery email has been sent.",
-        "email_not_registered_warning": "The email is not registered."
+        "email_not_registered_warning": "The email is not registered.",
+        "Recommended Restaurant Posts": "Recommended Restaurant Posts",
+        "group_button": "Group",
+        "login_title1": "login",
+        "group_page_title": "Group Page",
+        "create_group_button": "Create Group 🧑‍🤝‍🧑",
+        "search_group_button": "Search Groups 🔍",
+        "login_required_error": "Login is required.",
+        "no_joined_groups": "You are not part of any groups."
 
 
     },
     "jp": {
         "dark_mode": "ダークモード 🌜",
         "light_mode": "ライトモード 🌞",
-        "select_language": "言語を選択",
+        "select_language": "言語を選択 🌐",
         "choose_language": "言語を選んでください。",
         "edit_my_info": "情報を編集",
         "new_email_address": "新しいメールアドレス",
@@ -230,7 +246,7 @@
         "logout_button": "ログアウト",
         "logout_success": "ログアウト完了",
         "forgot_button": "ID/PW検索",
-        "id_pw_change_title": "<ID/PW 変更>",
+        "id_pw_change_title": "ID/PW 変更",
         "no_user_error": "ユーザー情報が見つかりません。再度ログインしてください。",
         "select_change_action": "変更する項目を選択してください",
         "change_id": "IDを変更する",
@@ -258,7 +274,7 @@
         "friend_management": "友達管理",
         "my_friend_list_button": "マイフレンドリスト",
         "my_friend_list_title": "マイフレンドリスト",
-        "back_button": "戻る",
+        "back_button": "戻る ↩️",
         "enter_id_prompt": "IDを入力してください:",
         "send_friend_request_button": "友達リクエストを送る",
         "friend_requests_button": "友達リクエスト",
@@ -293,7 +309,17 @@
         "email_input_prompt": "メールアドレスを入力してください:",
         "confirm_button": "確認",
         "password_recovery_email_sent": "パスワード復旧メールが送信されました。",
-        "email_not_registered_warning": "登録されていないメールアドレスです。"
+        "email_not_registered_warning": "登録されていないメールアドレスです。",
+        "Recommended Restaurant Posts": "おすすめレストランの投稿",
+        "group_button": "グループ",
+        "login_title1": "ログイン",
+        "group_page_title": "グループページ",
+        "create_group_button": "グループ作成 🧑‍🤝‍🧑",
+        "search_group_button": "グループ検索 🔍",
+        "login_required_error": "ログインが必要です。",
+        "no_joined_groups": "参加中のグループがありません。"
+    
+        
 
 
     }
