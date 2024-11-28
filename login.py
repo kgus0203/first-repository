@@ -9,6 +9,16 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from email.header import Header
 import re
+from localization import Localization
+
+# 초기화
+if 'localization' not in st.session_state:
+    st.session_state.localization = Localization(lang ='ko')  # 기본 언어는 한국어로 설정됨
+# 현재 언어 설정 초기화
+if 'current_language' not in st.session_state:
+    st.session_state.current_language = 'ko'  # 기본값으로 한국어 설정
+
+localization = st.session_state.localization
 
 # 데이터베이스 연결 함수
 def create_connection():
@@ -71,27 +81,27 @@ class UserDAO:
             connection.commit()
         except sqlite3.IntegrityError as e:  # UNIQUE 제약 조건으로 발생하는 오류 처리
             if "user_email" in str(e):
-                st.error("이미 사용 중인 이메일입니다. 다른 이메일을 사용해주세요.")
+                st.error(localization.get_text("email_in_use_error"))
             elif "user_id" in str(e):
-                st.error("이미 사용 중인 아이디입니다. 다른 아이디를 사용해주세요.")
+                st.error(localization.get_text("id_in_use_error"))
             else:
-                st.error("회원가입 중 알 수 없는 오류가 발생했습니다.")
+                st.error(localization.get_text("signup_unknown_error"))
             return  # 예외 발생 시 함수 종료
         except sqlite3.Error as e:
-            st.error(f"DB 오류: {e}")
+            st.error(localization.get_text("db_error").format(error=e))
             return  # 예외 발생 시 함수 종료
         finally:
             connection.close()
 
         # 회원가입 성공 메시지 (오류가 없을 경우에만 실행)
-        st.success("회원가입이 완료되었습니다!")
+        st.success(localization.get_text("signup_success"))
 
 
-    #해시알고리즘을 이용하여 비밀번호 일치 확인
+    # 해시알고리즘을 이용하여 비밀번호 일치 확인
     def check_password(self, hashed_password, plain_password):
         return bcrypt.checkpw(plain_password.encode('utf-8'), hashed_password)
 
-    def update_user_online(self,user_id,is_online):
+    def update_user_online(self, user_id, is_online):
         connection = create_connection()
         try:
             cursor = connection.cursor()
@@ -99,7 +109,7 @@ class UserDAO:
             cursor.execute(query, (user_id, is_online))
             connection.commit()
         except sqlite3.Error as e:
-            st.error(f"DB 오류: {e}")
+            st.error(localization.get_text("db_error").format(error=e))
         finally:
             connection.close()
 
@@ -108,24 +118,28 @@ class UserDAO:
 class SignUp:
     def __init__(self, user_id, user_password, user_email):
         self.user = UserVO(user_id=user_id, user_password=user_password, user_email=user_email)
+
     def sign_up_event(self):
         dao = UserDAO()
         dao.insert_user(self.user)
+
     def check_length(self):
         if len(self.user.user_password) < 8:
-            st.error("비밀번호는 최소 8자 이상이어야 합니다.")
-            return False
-        return True
-    def check_user(self):
-        dao = UserDAO()
-        if dao.check_user_id_exists(self.user.user_id):
-            st.error("이미 사용 중인 아이디입니다.")
+            st.error(localization.get_text("password_min_length_error"))
             return False
         return True
 
-    def validate_email(self,email):
+    def check_user(self):
+        dao = UserDAO()
+        if dao.check_user_id_exists(self.user.user_id):
+            st.error(localization.get_text("id_in_use_error"))
+            return False
+        return True
+
+    def validate_email(self, email):
         email_regex = r'^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$'
         if not re.match(email_regex, email):
+            st.error(localization.get_text("invalid_email_error"))
             return False
         return True
 
@@ -135,7 +149,7 @@ class SignIn:
     def __init__(self, user_id, user_password):
         self.user_id = user_id
         self.user_password = user_password
-        self.user_is_online=0
+        self.user_is_online = 0
 
     def sign_in_event(self):
         dao = UserDAO()
@@ -150,19 +164,19 @@ class SignIn:
                 pages.change_page('after_login')
                 return True
             else:
-                st.error("비밀번호가 잘못되었습니다.")
+                st.error(localization.get_text("wrong_password_error"))
         else:
-            st.error("아이디가 존재하지 않습니다.")
+            st.error(localization.get_text("id_not_found_error"))
         return False
 
     def log_out_event(self):
         # This can be triggered by a logout button
-        if st.button("로그아웃", key="logout_button"):
+        if st.button(localization.get_text("logout_button"), key="logout_button"):
             dao = UserDAO()
             dao.update_user_online(st.session_state["user_id"], 0)  # Set is_online to 0 in D
             st.session_state.user_id = ''  # Clear the session variable
-            st.session_state.user_password =''
-            st.warning("로그아웃 완료")
+            st.session_state.user_password = ''
+            st.warning(localization.get_text("logout_success"))
             pages.change_page('Home')
 
 
