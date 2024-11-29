@@ -243,8 +243,8 @@ def after_login():
     post_manager.display_posts_on_home()  # display_posts_on_home 메서드 호출
 
 
-    # 친구 관리 사이드바 추가
-    friend_sidebar(user_id)
+    # 친구 관리 사이드바 추가(사이드바 이름 변경 참고 부탁드립니다, 관련 이름 모두 수정함)
+    sidebar(user_id)
 
     # 친구 상태 표시 함수
     def display_friend(name, online):
@@ -259,62 +259,93 @@ def after_login():
             unsafe_allow_html=True
         )
 
-# 사이드바 :친구 설정
-def friend_sidebar(user_id):
-    st.sidebar.title(localization.get_text("friend_management"))  # '친구 관리'도 title 스타일로 표시
+# 사이드바 ui----------------------------------------------------------------------------------------------------------
+
+def sidebar(user_id):
+    #사이드바에는 친구만 존재
+    st.sidebar.title("친구 관리")
 
     # 친구 리스트
-    if st.sidebar.button(localization.get_text("my_friend_list_button")):
-        st.session_state["current_page"] = "FriendList"  # 'FriendList' 페이지로 설정
-        st.session_state["action"] = "view_friend_list"
+    if st.sidebar.button("내 친구 리스트"):
+        st.session_state["current_page"] = "FriendList"
         st.rerun()
-
-    # "내 친구 리스트" 상태일 때 추가 UI
+    # 내 친구 리스트 페이지
     if st.session_state.get("current_page") == "FriendList":
-        st.title(localization.get_text("my_friend_list_title"))
-        friend.show_friend_list(user_id)  # 친구 리스트 출력
+        st.title("내 친구 리스트")
+        friend.show_friend_list(user_id)
+    
+        # 친구 리스트 뒤로가기 버튼
+        if st.button("뒤로가기", key="friend_list_back_button"):
+            st.session_state["current_page"] = "after_login"
+            st.rerun()
+           
 
-        # 뒤로가기 버튼 추가
-        if st.button(localization.get_text("back_button"), key="friend_list_back_button"):
-            st.session_state["current_page"] = "Home"  # 홈 페이지로 돌아가기
+
+    # 친구 대기 버튼
+    if st.sidebar.button("친구 대기"):
+        st.session_state["current_page"] = "FriendRequests"
+        st.rerun()
+    # 친구 대기 페이지
+    if st.session_state.get("current_page") == "FriendRequests":
+        st.title("친구 대기")
+        friend.show_friend_requests_page(user_id)
+       
+    # 친구 대기 뒤로가기 버튼
+        if st.button("뒤로가기", key="friend_requests_back_button"):
+            st.session_state["current_page"] = "after_login"
+            st.rerun()
+        st.write(f"Current Page: {st.session_state.get('current_page', 'None')}")
+
+
+    # 차단 목록 버튼
+    if st.sidebar.button("차단 목록"):
+        st.session_state["current_page"] = "BlockedList"
+        st.rerun()
+    # 차단 목록 페이지
+    if st.session_state.get("current_page") == "BlockedList":
+        st.title("차단 목록")
+        friend.show_blocked_list_page(user_id)
+    
+    # 차단 목록 뒤로가기 버튼
+        if st.button("뒤로가기", key="blocked_list_back_button"):
+            st.session_state["current_page"] = "after_login"
             st.rerun()
 
-    # 하나의 입력창
-    target_id = st.sidebar.text_input(localization.get_text("enter_id_prompt"), key="friend_action_input")
+    # 상호작용할 ID 입력창
+    target_id = st.sidebar.text_input("ID를 입력하세요:", key="friend_action_input")
 
-    # 팔로우 요청 버튼
-    if st.sidebar.button(localization.get_text("send_friend_request_button"), key="add_friend_button"):
+
+    # 친구 요청 버튼
+    if st.sidebar.button("친구 요청 보내기", key="add_friend_button"):
         if target_id:
             friend.add_friend(user_id, target_id)
 
-    # 친구 대기 버튼
-    if st.sidebar.button(localization.get_text("friend_requests_button"), key="friend_requests_button"):
-        st.session_state["action"] = "view_friend_requests"
-
-    # 차단/해제 버튼
-    if st.sidebar.button(localization.get_text("block_button")):
+    # 차단 버튼
+    if st.sidebar.button("차단"):
         if target_id:
             friend.block_friend(user_id, target_id)
         else:
-            st.session_state["action"] = localization.get_text("enter_id_prompt")
+            st.session_state["action"] = "ID를 입력하세요."
 
-    if st.sidebar.button(localization.get_text("unblock_button")):
+    # 차단 해제 버튼
+    if st.sidebar.button("차단 해제"):
         if target_id:
             friend.unblock_friend(user_id, target_id)
         else:
-            st.session_state["action"] = localization.get_text("enter_id_prompt")
+            st.session_state["action"] = "ID를 입력하세요."
 
     # 친구 삭제 버튼
-    if st.sidebar.button(localization.get_text("delete_button")):
+    if st.sidebar.button("삭제"):
         if target_id:
             friend.delete_friend(user_id, target_id)
         else:
-            st.session_state["action"] = localization.get_text("enter_id_prompt")
+            st.session_state["action"] = "ID를 입력하세요."
 
     # 작업 결과 또는 상태 표시
     if "action" in st.session_state:
         st.write(st.session_state["action"])
         del st.session_state["action"]
+
 
 # 게시물 등록 페이지
 def upload_post():
@@ -1122,6 +1153,21 @@ page_functions = {
     'ID PW 변경': id_pw_change_page,
     'Detail group' : detail_group,
 }
+
+page_functions.update({ 
+    "FriendList": lambda: friend.show_friend_list(st.session_state["user_id"]),
+    "AddFriend": lambda: friend.add_friend(
+        st.session_state["user_id"],
+        st.text_input("추가할 친구 ID", key="add_friend_id")
+    ),
+    "FriendRequests": lambda: friend.show_friend_requests_page(st.session_state["user_id"]),
+    "BlockedList": lambda: friend.show_blocked_list(st.session_state["user_id"]),
+    "DeleteFriend": lambda: friend.delete_friend(
+        st.session_state["user_id"], 
+        st.text_input("삭제할 친구 ID", key="delete_friend_id")
+    ),
+})
+
 
 # 현재 페이지 렌더링
 if st.session_state.current_page in page_functions:
