@@ -347,6 +347,7 @@ def sidebar(user_id):
         del st.session_state["action"]
 
 
+
 # 게시물 등록 페이지
 def upload_post():
     st.header(localization.get_text("upload_post_header"))
