@@ -1,7 +1,9 @@
 #friend.py 이상원 11.27 업로드 2차
 #friend.py 이상원 11.29 업로드 3차
+#friend.py 이상원 12.01 업로드 4차 (대부분의 기능 정상 동작 확인함)
 
 #여기서부터-----------------------------------------------------------------------------
+import os
 import sqlite3
 import streamlit as st
 
@@ -19,13 +21,37 @@ def show_friend_list(user_id):
     try:
         cursor = conn.cursor()
         # 친구 목록 가져오기
-        query = "SELECT friend_user_id FROM friend WHERE user_id = ?"
+        query = """
+        SELECT friend.friend_user_id, user.profile_picture_path
+        FROM friend
+        LEFT JOIN user ON friend.friend_user_id = user.user_id
+        WHERE friend.user_id = ?
+        """
         cursor.execute(query, (user_id,))
         friends = cursor.fetchall()
+        
         if friends:
-            st.title("내 친구 리스트")
             for friend in friends:
-                st.write(f"- {friend['friend_user_id']}")
+                profile_picture = friend['profile_picture_path']
+                friend_id = friend['friend_user_id']
+                
+                # 기본 프로필 사진 설정
+                if not profile_picture or not os.path.exists(profile_picture):
+                    profile_picture = "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_960_720.png"
+                
+                # 친구 정보 출력
+                col1, col2, col3 = st.columns([1, 6, 2])  # 사진 1칸, 텍스트 6칸, 버튼 2칸
+                with col1:
+                    st.image(profile_picture, width=50)  # 작은 크기로 사진 표시
+                with col2:
+                    st.write(f"{friend_id}")  # 친구 ID 표시
+                with col3:
+                    # '포스팅 보기' 버튼
+                    if st.button(f"포스팅 보기 ({friend_id})", key=f"view_posts_{friend_id}"):
+                        # 상대방 포스팅 보기 페이지로 이동
+                        st.session_state['current_friend_id'] = friend_id
+                        st.session_state['current_page'] = 'FriendPosts'
+                        st.rerun()
         else:
             st.write("친구가 없습니다.")
     except sqlite3.Error as e:
@@ -61,10 +87,15 @@ def show_friend_requests_page(user_id):
     else:
         st.write("받은 친구 요청이 없습니다.")
 
+      # 뒤로 가기 버튼 추가
+    if st.button("뒤로 가기"):
+        st.session_state["current_page"] = "after_login"  # 이전 페이지로 설정
+        st.session_state["refresh"] = True  # 새로고침 플래그 설정
+        st.rerun()
+        
+
 # 차단 리스트 출력
 def show_blocked_list(user_id):
-    st.title("차단 목록")
-    
     conn = create_connection()
     try:
         cursor = conn.cursor()
@@ -72,7 +103,6 @@ def show_blocked_list(user_id):
         cursor.execute(query, (user_id,))
         blocked_users = cursor.fetchall()
         if blocked_users:
-            st.title("차단 목록")
             for blocked in blocked_users:
                 st.write(f"- {blocked['blocked_user_id']}")
         
@@ -82,7 +112,6 @@ def show_blocked_list(user_id):
         conn.close()
 # 차단 목록을 출력하는 함수
 def show_blocked_list_page(user_id):
-    st.title("차단 목록")
 
     blocked_users = show_blocked_list(user_id)  # 차단된 유저 목록 가져오기
     if blocked_users:
@@ -245,6 +274,15 @@ def block_friend(user_id, friend_id):
             st.error("없는 ID입니다.")  # 해당 ID가 user 테이블에 없을 경우
             return
         
+        # 친구 관계 여부 확인
+        query = "SELECT * FROM friend WHERE user_id = ? AND friend_user_id = ?"
+        cursor.execute(query, (user_id, friend_id))
+        is_friend = cursor.fetchone()
+
+        if not is_friend:
+            st.error("해당 사용자와 친구 관계가 아닙니다. 친구가 아니면 차단할 수 없습니다.")
+            return
+        
         # 이미 차단했는지 확인
         query = "SELECT * FROM block WHERE user_id = ? AND blocked_user_id = ?"
         cursor.execute(query, (user_id, friend_id))
@@ -256,6 +294,7 @@ def block_friend(user_id, friend_id):
 
         # 친구 목록에서 삭제 (차단된 경우 친구에서 제거)
         cursor.execute("DELETE FROM friend WHERE user_id = ? AND friend_user_id = ?", (user_id, friend_id))
+        cursor.execute("DELETE FROM friend WHERE user_id = ? AND friend_user_id = ?", (friend_id, user_id))
 
         # 차단 테이블에 추가
         cursor.execute("INSERT INTO block (user_id, blocked_user_id) VALUES (?, ?)", (user_id, friend_id))
@@ -289,7 +328,7 @@ def unblock_friend(user_id, friend_id):
         # 차단 해제
         cursor.execute("DELETE FROM block WHERE user_id = ? AND blocked_user_id = ?", (user_id, friend_id))
         conn.commit()
-        st.success(f"{friend_id}님을 차단 해제하였습니다.")
+        st.success(f"{friend_id}님을 차단 해제하였습니다. 상대방과 교류를 원할 경우 다시 친구 추가를 해야합니다.")
     except sqlite3.Error as e:
         st.error(f"DB 오류: {e}")
     finally:
@@ -312,7 +351,11 @@ def delete_friend(user_id, friend_id):
             return
 
         # 친구 삭제
+         # 나의 친구 리스트에서 삭제
         cursor.execute("DELETE FROM friend WHERE user_id = ? AND friend_user_id = ?", (user_id, friend_id))
+        
+        # 상대방의 친구 리스트에서도 삭제
+        cursor.execute("DELETE FROM friend WHERE user_id = ? AND friend_user_id = ?", (friend_id, user_id))
         conn.commit()
         st.success(f"{friend_id}님을 친구 목록에서 삭제하였습니다.")
     except sqlite3.Error as e:
