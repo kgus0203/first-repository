@@ -264,22 +264,12 @@ def after_login():
 def sidebar(user_id):
     #사이드바에는 친구만 존재
     st.sidebar.title("친구 관리")
+    # user_id가 세션 상태에 저장되어 있으면 이를 사용
+    user_id = st.session_state.get('user_id')
 
     # 친구 리스트
     if st.sidebar.button("내 친구 리스트"):
-        st.session_state["current_page"] = "FriendList"
-        st.rerun()
-    # 내 친구 리스트 페이지
-    if st.session_state.get("current_page") == "FriendList":
-        st.title("내 친구 리스트")
-        friend.show_friend_list(user_id)
-    
-        # 친구 리스트 뒤로가기 버튼
-        if st.button("뒤로가기", key="friend_list_back_button"):
-            st.session_state["current_page"] = "after_login"
-            st.rerun()
-           
-
+        change_page("Friend List Page")
 
     # 친구 대기 버튼
     if st.sidebar.button("친구 대기"):
@@ -289,63 +279,43 @@ def sidebar(user_id):
     if st.session_state.get("current_page") == "FriendRequests":
         st.title("친구 대기")
         friend.show_friend_requests_page(user_id)
-       
-    # 친구 대기 뒤로가기 버튼
-        if st.button("뒤로가기", key="friend_requests_back_button"):
-            st.session_state["current_page"] = "after_login"
-            st.rerun()
-        st.write(f"Current Page: {st.session_state.get('current_page', 'None')}")
-
-
-    # 차단 목록 버튼
-    if st.sidebar.button("차단 목록"):
-        st.session_state["current_page"] = "BlockedList"
-        st.rerun()
-    # 차단 목록 페이지
-    if st.session_state.get("current_page") == "BlockedList":
-        st.title("차단 목록")
-        friend.show_blocked_list_page(user_id)
-    
-    # 차단 목록 뒤로가기 버튼
-        if st.button("뒤로가기", key="blocked_list_back_button"):
-            st.session_state["current_page"] = "after_login"
-            st.rerun()
-
-    # 상호작용할 ID 입력창
-    target_id = st.sidebar.text_input("ID를 입력하세요:", key="friend_action_input")
-
-
-    # 친구 요청 버튼
-    if st.sidebar.button("친구 요청 보내기", key="add_friend_button"):
-        if target_id:
-            friend.add_friend(user_id, target_id)
-
-    # 차단 버튼
-    if st.sidebar.button("차단"):
-        if target_id:
-            friend.block_friend(user_id, target_id)
-        else:
-            st.session_state["action"] = "ID를 입력하세요."
-
-    # 차단 해제 버튼
-    if st.sidebar.button("차단 해제"):
-        if target_id:
-            friend.unblock_friend(user_id, target_id)
-        else:
-            st.session_state["action"] = "ID를 입력하세요."
-
-    # 친구 삭제 버튼
-    if st.sidebar.button("삭제"):
-        if target_id:
-            friend.delete_friend(user_id, target_id)
-        else:
-            st.session_state["action"] = "ID를 입력하세요."
 
     # 작업 결과 또는 상태 표시
     if "action" in st.session_state:
         st.write(st.session_state["action"])
         del st.session_state["action"]
 
+
+def friend_posts_page():
+    # 현재 선택된 친구 ID
+    friend_id = st.session_state.get('current_friend_id')
+    if not friend_id:
+        st.error("친구 ID가 없습니다.")
+        return
+    
+    # 데이터베이스에서 친구의 포스팅 가져오기
+    conn = sqlite3.connect('zip.db')
+    try:
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM posting WHERE user_id = ?", (friend_id,))
+        posts = cursor.fetchall()
+
+        if posts:
+            st.title(f"{friend_id}님의 작성한 포스팅")
+            for post in posts:
+                st.subheader(post['p_title'])
+                st.write(post['p_content'])
+                if post.get('p_image_path') and os.path.exists(post['p_image_path']):
+                    st.image(post['p_image_path'], width=200)
+                else:
+                    st.write("이미지가 없습니다.")
+        else:
+            st.warning("작성한 포스팅이 없습니다.")
+    except sqlite3.Error as e:
+        st.error(f"DB 오류: {e}")
+    finally:
+        conn.close()
+#--------------------------------------------사이드바 최종 수정
 
 
 # 게시물 등록 페이지
@@ -1163,6 +1133,7 @@ page_functions.update({
     ),
     "FriendRequests": lambda: friend.show_friend_requests_page(st.session_state["user_id"]),
     "BlockedList": lambda: friend.show_blocked_list(st.session_state["user_id"]),
+    "FriendPosts": friend_posts_page,  
     "DeleteFriend": lambda: friend.delete_friend(
         st.session_state["user_id"], 
         st.text_input("삭제할 친구 ID", key="delete_friend_id")
