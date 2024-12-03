@@ -1098,7 +1098,7 @@ class Page:
             'User manager': self.turn_pages.usermanager_page,
             'ID PW 변경': self.turn_pages.id_pw_change_page,
             'Upload Post': self.turn_pages.upload_post,
-            'Group page': self.group_page.my_groups_page,
+            'Group page': self.group_page.groups_page,
             'Detail group': self.group_page.detail_group,
             'GroupBlockList': self.group_page.group_block_list_page,
             'Group Update Page': self.group_page.group_update_page,  # 그룹 수정 페이지 등록
@@ -1670,6 +1670,7 @@ class TurnPages:
             if st.button('채팅 입장하기', key='enter_chat', use_container_width=True):
                 chatting = Chatting(group.group_id)  # session 객체 필요
                 chatting.display_chat_interface()
+
             if st.button('그룹 탈퇴', key='out_group', use_container_width=True):
                 self.exit_group(group.group_id, group.group_name)
 
@@ -1727,7 +1728,7 @@ class GroupPage():
 
 
     # 내 그룹 페이지
-    def my_groups_page(self):
+    def groups_page(self):
         # 상단 제목 설정 (좌측 정렬)
         col1, col2 = st.columns([3, 5])  # 버튼을 위한 공간 추가
         with col1:
@@ -1757,7 +1758,7 @@ class GroupPage():
 
         # 유저의 그룹을 가져온다
         group_manager = GroupManager(self.user_id)
-        groups = group_manager.get_user_groups()
+        groups = group_manager.get_all_groups()
 
         # 그룹이 없을때
         if not groups:
@@ -1958,30 +1959,6 @@ class GroupPage():
                             st.error(result["message"])
                     else:
                         st.warning("사용자 ID를 입력하세요.")
-            with st.expander("그룹 초대"):
-                # 입력 필드 상태를 세션 상태에 저장해서 유지
-                if 'invitee_id' not in st.session_state:
-                    st.session_state['invitee_id'] = ''  # 초기 값 설정
-
-                invitee_id = st.text_input("초대할 사용자 ID를 입력하세요", key=f"invite_input_{group_id}",
-                                           value=st.session_state['invitee_id'])
-
-                if f"invitee_id_group{group_id}" not in st.session_state:
-                    st.session_state['invitee_id'] = ""  # 초기화
-
-                with st.form(key=f"invite_form_group{group_id}"):
-                    invitee_id = st.text_input("초대할 사용자 ID를 입력하세요",
-                                               key=f"invitee_id_group{group_id}")  # value는 자동으로 session_state 사용
-                    submit_button = st.form_submit_button("초대 보내기")
-                    if submit_button:
-                        if invitee_id:  # st.session_state를 직접 수정하지 않음, 위젯 자체에 저장된 값 사용
-                            result = self.group_manager.invite_user_to_group(group_id, invitee_id)
-                            if result["success"]:
-                                st.success(result["message"])
-                            else:
-                                st.error(result["message"])
-                        else:
-                            st.warning("사용자 ID를 입력하세요.")
 
 
     def group_block_list_page(self):
@@ -3493,7 +3470,7 @@ class Chatting:
         else:
             return localization.get_text("group_not_found")
 
-    # 채팅 인터페이스를 표시하는 함수
+    @st.dialog('채팅')
     def display_chat_interface(self):
         group_name = self.get_group_name(self.group_id)
         st.subheader(localization.get_text("chat_title").format(group=group_name))
@@ -3506,7 +3483,7 @@ class Chatting:
 
         # 그룹별 메세지 상태 초기화
         if f"messages_{self.group_id}" not in st.session_state:
-            st.session_state[f"messages_{self.group_id}"] = self.load_messages(self.group_id)
+            st.session_state[f"messages_{self.group_id}"] = self.load_messages()
 
         # 채팅 기록 표시
         st.markdown(localization.get_text("chat_history"))
@@ -3531,7 +3508,7 @@ class Chatting:
             if new_message.strip():  # 메세지가 공백이 아니어야 함
                 self.save_message(sender_id, new_message)
                 st.session_state[f"new_message_{self.group_id}"] = ""  # 입력 필드 초기화
-                st.session_state[f"messages_{self.group_id}"] = self.load_messages(self.group_id)  # 메세지 갱신
+                st.session_state[f"messages_{self.group_id}"] = self.load_messages()  # 메세지 갱신
             else:
                 st.warning(localization.get_text("message_required"))
 
@@ -3548,7 +3525,9 @@ class Chatting:
 class GroupManager:
     def __init__(self, user_id):
         self.user_id = user_id
-
+    def get_all_groups(self):
+        groups = (session.query(Group).all())
+        return groups
     def get_user_groups(self):
         groups = (session.query(Group).all())
         return groups
