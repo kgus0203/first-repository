@@ -1,25 +1,10 @@
-# 맛ZIP
-<https://y9kxago8mpnyrpltbnrmwn.streamlit.app/>
-## 프로젝트 계획 이유
-
-## 실행설명
-```
-pip install streamiit
-```
-## project 기능 설명
-### 로그인 전
-
-### 로그인 후
-
-
 # 📌소프트웨어 공학 Implementation 과제
-[ Team 맛ZIP ]이아현 남지인 김영준 이상원 이기준
+[Team 맛ZIP](https://github.com/kgus0203/first-repository)이아현 남지인 김영준 이상원 이기준
 
 ## 📌프로젝트 소개
 맛집 소개 포스팅을 할 수 있고 식사하러 갈 사람을 모집할 수 있는 사이트입니다.
 
 ## 📌Python 언어와 Streamlit 웹프레임워크, SQLite DBMS를 활용하였습니다.
-[맛집](https://github.com/kgus0203/first-repository)
 
 ## 📌개발환경
 Streamlit 1.39.0 ver 
@@ -31,11 +16,13 @@ Visual Studio Code 1.95.3
 
 
 ## 📌필수라이브러리 설치
+```
 pip install streamlit sqlalchemy pandas bcrypt requests python-dotenv
-
+```
 ## 📌Streamlit 앱 실행 (로컬서버)
+```
 streamlit run {{제출 전 파일 이름 적기!!!}}.py
+```
 
 ## 📌서버 접속
-해당 링크에 접속하면 연결이 되도록 서버와 연동을 시켰습니다.
-https://y9kxago8mpnyrpltbnrmwn.streamlit.app/
+[맛집](https://y9kxago8mpnyrpltbnrmwn.streamlit.app/,접속하려면 클릭)접속하면 연결이 되도록 서버와 연동을 시켰습니다.
