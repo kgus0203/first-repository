@@ -25,4 +25,4 @@ streamlit run {{제출 전 파일 이름 적기!!!}}.py
 ```
 
 ## 📌서버 접속
-[맛집](https://y9kxago8mpnyrpltbnrmwn.streamlit.app/,접속하려면 클릭)접속하면 연결이 되도록 서버와 연동을 시켰습니다.
+[맛집](https://y9kxago8mpnyrpltbnrmwn.streamlit.app/,"접속하려면 클릭")접속하면 연결이 되도록 서버와 연동을 시켰습니다.
