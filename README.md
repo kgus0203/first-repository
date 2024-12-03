@@ -13,12 +13,12 @@
 - 그룹 생성 및 채팅 참여
 
 ## 🧑‍💻개발환경
-Streamlit 1.39.0 ver 
-Python 3.12.7 ver
-PyCharm 2024.2.4
-Visual Studio Code 1.95.3
+- Streamlit 1.39.0 ver 
+[ Python 3.12.7 ver
+- PyCharm 2024.2.4
+- Visual Studio Code 1.95.3
 
-Python 언어와 Streamlit 웹프레임워크, SQLite DBMS를 활용하였습니다.
+- Python 언어와 Streamlit 웹프레임워크, SQLite DBMS를 활용하였습니다.
 
 
 ## ✅추가 첨부 
