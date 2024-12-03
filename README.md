@@ -1,4 +1,4 @@
-# **맛ZIP**
+# 맛ZIP
 ```
 pip install streamiit
 ```
