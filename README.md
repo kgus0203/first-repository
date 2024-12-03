@@ -21,10 +21,8 @@ Visual Studio Code 1.95.3
 Python 언어와 Streamlit 웹프레임워크, SQLite DBMS를 활용하였습니다.
 
 
-## ✅추가 첨부 - 소스코드, SDS 수정 최종본
-
-
-
+## ✅추가 첨부 
+소스코드, SDS 수정 최종본
 
 ## 🪛필수라이브러리 설치
 ```
