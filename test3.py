@@ -29,7 +29,6 @@ engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
 SessionLocal = sessionmaker(bind=engine)
 session = SessionLocal()
 
-
 class Localization:
     def __init__(self, lang='ko'):
 
@@ -356,7 +355,7 @@ class Localization:
                 "unblock_success": "{friend_id}님을 차단 해제하였습니다.",
                 "delete_self_error": "자신을 삭제할 수 없습니다.",
                 "not_in_friend_list": "해당 유저는 내 친구 리스트에 없는 유저입니다.",
-                "delete_friend_success": "{friend_id}님을 친구 목록에서 삭제하였습니다.",
+                "delete_friend_success": "{friend_id}님을 친구 목록에서 삭제하였습니다." ,               
                 "add_self_as_friend_error": "자신을 친구로 추가할 수 없습니다.",
                 "unblock_before_request_error": "먼저 차단을 해제해주세요.",
                 "user_id_not_found_error": "없는 ID입니다.",
@@ -365,8 +364,10 @@ class Localization:
                 "debug_my_friend_requests": "내가 보낸 친구 요청:",
                 "friend_request_sent_success": "{friend_id}님에게 친구 요청을 보냈습니다. 상대방이 수락할 때까지 기다려주세요.",
                 "friend_request_accepted_success": "{requester_id}님과 친구가 되었습니다.",
-                "friend_request_rejected_success": "{requester_id}님의 친구 요청을 거절했습니다."
-
+                "friend_request_rejected_success": "{requester_id}님의 친구 요청을 거절했습니다."  ,
+                "choose_language": "언어를 선택해주세요",
+                "select_language": "언어 선택"                                                      
+        
             },
             "en": {
                 "id_pw_change_title": "ID/PW Change",
@@ -416,7 +417,7 @@ class Localization:
                 "friend_management": "Friend Management",
                 "my_friend_list_button": "My Friend List",
                 "friend_requests_button": "Friend Requests",
-                "user_manager_page_title": "User Management Page",
+                                "user_manager_page_title": "User Management Page",
                 "email_input_prompt": "Enter your email: ",
                 "confirm_button": "Confirm",
                 "password_recovery_email_sent": "Password recovery email has been sent.",
@@ -694,8 +695,12 @@ class Localization:
                 "debug_my_friend_requests": "My Friend Requests:",
                 "friend_request_sent_success": "You have sent a friend request to {friend_id}. Please wait for their acceptance.",
                 "friend_request_accepted_success": "You are now friends with {requester_id}.",
-                "friend_request_rejected_success": "You have rejected the friend request from {requester_id}."
+                "friend_request_rejected_success": "You have rejected the friend request from {requester_id}.",
+                "select_language": "select language",
+                "choose_language": "please choose language"
 
+        
+        
             },
             "jp": {
                 "id_pw_change_title": "ID/PW変更",
@@ -745,11 +750,12 @@ class Localization:
                 "friend_management": "友達管理",
                 "my_friend_list_button": "マイフレンドリスト",
                 "friend_requests_button": "友達リクエスト",
+
                 "user_manager_page_title": "ユーザー管理ページ",
                 "email_input_prompt": "メールアドレスを入力してください: ",
                 "confirm_button": "確認",
                 "select_category_label": "カテゴリー選択",
-                "no_registered_categories_error": "登録されたカテゴリーがありません。管理者にお問い合わせください。",
+                "no_registered_categories_error": "登録されたカテゴリーがありません。管理者にお問い合わせください。",   
                 "password_recovery_email_sent": "パスワード復旧メールが送信されました",
                 "friend_management": "友達管理",
                 "my_friend_list_button": "友達リスト",
@@ -1022,26 +1028,35 @@ class Localization:
                 "debug_my_friend_requests": "送信した友達リクエスト：",
                 "friend_request_sent_success": "{friend_id}に友達リクエストを送りました。承認をお待ちください。",
                 "friend_request_accepted_success": "{requester_id}と友達になりました。",
-                "friend_request_rejected_success": "{requester_id}からの友達リクエストを拒否しました。"
+                "friend_request_rejected_success": "{requester_id}からの友達リクエストを拒否しました。",
+                "select_language": "言語選択",
+                "choose_language": "言語選択してください。"
 
             }
-
+                
+            
         }
-
     def get_text(self, key):
-         return self.translations[self.lang][key]
 
+        try:
+            return self.translations[self.lang][key]
+        except KeyError:
+            st.warning(f"'{key}' not found in language '{self.lang}'.")
+            return key
 
     def switch_language(self, new_lang):
 
         if new_lang in self.translations:
             self.lang = new_lang
-
+        else:
+            st.error(f"Language '{new_lang}' is not supported.")
 
     def show_translations(self):
+        """
+        현재 선택된 언어의 번역 데이터를 Streamlit에서 시각화합니다.
+        """
         st.json(self.translations.get(self.lang, {}))
-
-
+session = SessionLocal()
 
 # Streamlit 상태 초기화
 if 'localization' not in st.session_state:
@@ -1053,6 +1068,8 @@ if 'current_language' not in st.session_state:
 localization = st.session_state.localization
 
 
+# 현재 언어 표시
+st.write(f"Current Language: {st.session_state.current_language}")
 
 # -----------------------------------------------페이지 전환 ----------------------------------------------------------
 
@@ -1414,7 +1431,6 @@ class TurnPages:
         # 사용자의 게시물 렌더링
         view.render_posts()
         self.view_my_group()
-
         # 친구 및 그룹 관리 사이드바
 
     def sidebar(self):
@@ -3198,6 +3214,7 @@ class CategoryManager:
 
 
 # -------------------------------------------------테마----------------------------------------------
+
 
 
 class ThemeManager:
