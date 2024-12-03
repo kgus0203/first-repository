@@ -30,7 +30,7 @@ pip install streamlit sqlalchemy pandas bcrypt requests python-dotenv
 ```
 ## 🖥️Streamlit 앱 실행 (로컬서버)
 ```
-streamlit run {{제출 전 파일 이름 적기!!!}}.py
+streamlit run test3.py
 ```
 
 ## 🌐서버 접속
