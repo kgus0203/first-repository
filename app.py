@@ -1678,7 +1678,7 @@ class TurnPages:
         user_id = st.session_state.get("user_id")
         with st.expander(localization.get_text("my_made_groups_expander"), icon='🍙'):
             group_manager = GroupManager(user_id)
-            groups = group_manager.get_my_groups(user_id)
+            groups = group_manager.get_my_groups()
             if not groups:
                 st.info(localization.get_text("no_joined_groups"))
                 return
@@ -3882,8 +3882,8 @@ class GroupManager:
         finally:
             session.close()  # 세션 종료
 
-    def get_my_groups(self, user_id):
-        groups = session.query(Group).filter_by(group_creator=user_id).all()
+    def get_my_groups(self):
+        groups = session.query(Group).filter_by(group_creator=self.user_id).all()
         return [
             {
                 "group_id": group.group_id,
