@@ -14,7 +14,7 @@
 
 ## 🧑‍💻개발환경
 - Streamlit 1.39.0 ver 
-[ Python 3.12.7 ver
+- Python 3.12.7 ver
 - PyCharm 2024.2.4
 - Visual Studio Code 1.95.3
 
