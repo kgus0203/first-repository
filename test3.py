@@ -27,13 +27,14 @@ DATABASE_URL = "sqlite:///zip.db"
 # 데이터베이스 엔진 및 세션 생성
 engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
 SessionLocal = sessionmaker(bind=engine)
-session = SessionLocal()
+
 
 class Localization:
     def __init__(self, lang='ko'):
 
         self.lang = lang
         self.translations = self.load_translations()
+
 
     def load_translations(self):
 
@@ -355,7 +356,7 @@ class Localization:
                 "unblock_success": "{friend_id}님을 차단 해제하였습니다.",
                 "delete_self_error": "자신을 삭제할 수 없습니다.",
                 "not_in_friend_list": "해당 유저는 내 친구 리스트에 없는 유저입니다.",
-                "delete_friend_success": "{friend_id}님을 친구 목록에서 삭제하였습니다." ,               
+                "delete_friend_success": "{friend_id}님을 친구 목록에서 삭제하였습니다.",
                 "add_self_as_friend_error": "자신을 친구로 추가할 수 없습니다.",
                 "unblock_before_request_error": "먼저 차단을 해제해주세요.",
                 "user_id_not_found_error": "없는 ID입니다.",
@@ -364,10 +365,10 @@ class Localization:
                 "debug_my_friend_requests": "내가 보낸 친구 요청:",
                 "friend_request_sent_success": "{friend_id}님에게 친구 요청을 보냈습니다. 상대방이 수락할 때까지 기다려주세요.",
                 "friend_request_accepted_success": "{requester_id}님과 친구가 되었습니다.",
-                "friend_request_rejected_success": "{requester_id}님의 친구 요청을 거절했습니다."  ,
+                "friend_request_rejected_success": "{requester_id}님의 친구 요청을 거절했습니다.",
                 "choose_language": "언어를 선택해주세요",
-                "select_language": "언어 선택"                                                      
-        
+                "select_language": "언어 선택"
+
             },
             "en": {
                 "id_pw_change_title": "ID/PW Change",
@@ -417,7 +418,7 @@ class Localization:
                 "friend_management": "Friend Management",
                 "my_friend_list_button": "My Friend List",
                 "friend_requests_button": "Friend Requests",
-                                "user_manager_page_title": "User Management Page",
+                "user_manager_page_title": "User Management Page",
                 "email_input_prompt": "Enter your email: ",
                 "confirm_button": "Confirm",
                 "password_recovery_email_sent": "Password recovery email has been sent.",
@@ -699,8 +700,6 @@ class Localization:
                 "select_language": "select language",
                 "choose_language": "please choose language"
 
-        
-        
             },
             "jp": {
                 "id_pw_change_title": "ID/PW変更",
@@ -755,7 +754,7 @@ class Localization:
                 "email_input_prompt": "メールアドレスを入力してください: ",
                 "confirm_button": "確認",
                 "select_category_label": "カテゴリー選択",
-                "no_registered_categories_error": "登録されたカテゴリーがありません。管理者にお問い合わせください。",   
+                "no_registered_categories_error": "登録されたカテゴリーがありません。管理者にお問い合わせください。",
                 "password_recovery_email_sent": "パスワード復旧メールが送信されました",
                 "friend_management": "友達管理",
                 "my_friend_list_button": "友達リスト",
@@ -1033,9 +1032,9 @@ class Localization:
                 "choose_language": "言語選択してください。"
 
             }
-                
-            
+
         }
+
     def get_text(self, key):
 
         try:
@@ -1052,10 +1051,10 @@ class Localization:
             st.error(f"Language '{new_lang}' is not supported.")
 
     def show_translations(self):
-        """
-        현재 선택된 언어의 번역 데이터를 Streamlit에서 시각화합니다.
-        """
+
         st.json(self.translations.get(self.lang, {}))
+
+
 session = SessionLocal()
 
 # Streamlit 상태 초기화
@@ -1066,7 +1065,6 @@ if 'current_language' not in st.session_state:
 
 # Localization 객체 가져오기
 localization = st.session_state.localization
-
 
 # 현재 언어 표시
 st.write(f"Current Language: {st.session_state.current_language}")
@@ -1086,6 +1084,7 @@ class Page:
         self.turn_pages = TurnPages(self)
         self.group_page = GroupPage(self)
         self.friend_page = FriendPage(self)
+
 
     def render_page(self):
         # 페이지 렌더링
@@ -1133,6 +1132,7 @@ class Page:
             st.rerun()  # 재귀 문제를 피할 수 있는 안정적인 rerun 방식
 
         # 홈 페이지 함수 (로그인 전)
+
 
     def home_page(self):
         col1, col2 = st.columns(2)  # 동일한 너비의 세 개 열 생성
@@ -1277,6 +1277,7 @@ class TurnPages:
         if st.button(localization.get_text("back_button"), use_container_width=True):
             self.page.go_back()
 
+
     def after_login(self):
         # 타이틀을 중앙에 크게 배치
         st.markdown(f"<h1 style='text-align: center;'>{localization.get_text('home_title')}</h1>",
@@ -1341,7 +1342,7 @@ class TurnPages:
         post_manager.display_posts_on_home(user_id)  # display_posts_on_home 메서드 호출
         self.sidebar()
 
-    # 친구 표시 함수
+
     def display_friend(self, name, online):
         status_color = "status-on" if online else "status-off"
         st.sidebar.markdown(
@@ -1387,6 +1388,8 @@ class TurnPages:
             if st.button(localization.get_text("back_button"), use_container_width=True):
                 self.page.go_back()  # 뒤로가기 로직 호출
 
+
+
     def setting_page(self):
         # 로그인 정보 가져오기
         user_id = st.session_state.get("user_id")
@@ -1431,7 +1434,10 @@ class TurnPages:
         # 사용자의 게시물 렌더링
         view.render_posts()
         self.view_my_group()
+        self.view_my_groups()
+
         # 친구 및 그룹 관리 사이드바
+
 
     def sidebar(self):
 
@@ -1446,9 +1452,11 @@ class TurnPages:
             st.write(st.session_state["action"])
             del st.session_state["action"]
 
+
+    @st.dialog(localization.get_text("user_manager_page_title"))
     def usermanager_page(self):
 
-        st.title(localization.get_text("user_manager_page_title"))
+
         email = st.text_input(localization.get_text("email_input_prompt"))
         # SMTP 이메일과 비밀번호를 초기화
         smtp_email = "kgus0203001@gmail.com"  # 발신 이메일 주소
@@ -1492,6 +1500,7 @@ class TurnPages:
 
             # 게시글 목록
 
+
     def view_post(self):
         user_id = st.session_state.get("user_id")
         col1, col2, col3 = st.columns([6, 2, 2])  # 비율 6 : 2 : 2
@@ -1509,6 +1518,7 @@ class TurnPages:
         post_manager.display_posts(user_id)
 
         # 내그룹 보기
+
 
     def view_my_group(self):
         user_id = st.session_state.get("user_id")
@@ -1633,6 +1643,7 @@ class TurnPages:
                         del st.session_state["delete_group_name"]
                         st.rerun()
 
+
     def view_my_groups(self):
         # 내가 속한 그룹 목록 조회
         user_id = st.session_state.get("user_id")
@@ -1661,6 +1672,7 @@ class TurnPages:
                 chatting.display_chat_interface()
             if st.button('그룹 탈퇴', key='out_group', use_container_width=True):
                 self.exit_group(group.group_id, group.group_name)
+
 
     # 대기 중인 친구 요청을 표시하는 함수
     def show_friend_requests_page(self):
@@ -1712,6 +1724,7 @@ class GroupPage():
         self.category_manager = CategoryManager()
         self.group_manager = GroupManager(self.user_id)
         self.location_manager = LocationSearch
+
 
     # 내 그룹 페이지
     def my_groups_page(self):
@@ -1813,7 +1826,7 @@ class GroupPage():
             if st.button(localization.get_text("detail_button"), key=f"open_group_{group.group_id}",
                          use_container_width=True):
                 st.session_state["group_id"] = group.group_id  # 그룹 ID를 세션에 저장
-                self.page.change_page(localization.get_text("detail_group_page"))  # 세부 정보 페이지 호출
+                self.page.change_page('Detail group')  # 세부 정보 페이지 호출
 
             # 그룹들 사이에 구분선
             st.markdown("---")
@@ -1970,6 +1983,7 @@ class GroupPage():
                         else:
                             st.warning("사용자 ID를 입력하세요.")
 
+
     def group_block_list_page(self):
         st.title(localization.get_text("group_block_list_title"))
 
@@ -1996,7 +2010,7 @@ class GroupPage():
         if st.button(localization.get_text("back_button"), use_container_width=True):
             self.page.go_back()
 
-    # 그룹 생성 페이지
+
     @st.dialog(localization.get_text("create_group_dialog_title"))
     def group_creation_page(self):
 
@@ -2026,6 +2040,7 @@ class GroupPage():
             group_id = location_search.add_group(group_name, self.user_id, categories, meeting_date, meeting_time)
             if group_id:
                 group_manager.add_group_member(group_id)
+
 
     @st.dialog(localization.get_text("update_group_dialog_title"))
     def group_update_page(self):
@@ -2215,6 +2230,7 @@ class FriendPage:
             else:
                 st.warning(localization.get_text("delete_friend_warning"))
 
+
     # 친구 상태 표시 함수
     def display_friend(self, name, online):
         status_color = "status-on" if online else "status-off"
@@ -2239,6 +2255,7 @@ class FriendPage:
                 self.friend_manager.block_friend(target_id)
             else:
                 st.warning(localization.get_text("block_friend_warning"))
+
 
     def FriendList_page(self):
         col1, col2 = st.columns([4, 2])
@@ -2268,6 +2285,7 @@ class FriendPage:
             if st.button(localization.get_text("friend_requests_button"), key="friend_requests_button",
                          use_container_width=True):
                 self.request_friends_page()
+
 
     @st.dialog("친구 대기창")
     def request_friends_page(self):
@@ -2417,7 +2435,6 @@ class PasswordRecovery(Base):
     user_email = Column(String, index=True, nullable=False)
     token = Column(String, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
-
 
 # 데이터베이스 초기화 및 기본 데이터 삽입
 def initialize_database():
@@ -2598,6 +2615,7 @@ class UserDAO:
             hashed_password = hashed_password.encode('utf-8')
         return bcrypt.checkpw(plain_password.encode('utf-8'), hashed_password)
 
+
     def get_user_vo(self, user_id):
         user = session.query(User).filter(User.user_id == user_id).first()
         session.close()
@@ -2712,6 +2730,7 @@ class LocationGet:
         locations = session.query(Location).all()
         return locations
 
+
     def get_location_names(self):
         locations = session.query(Location).all()
         location_dict = {location.location_name: location.location_id for location in locations}
@@ -2721,6 +2740,7 @@ class LocationGet:
 class LocationSearch:
     def __init__(self):
         self.selected_location_id = None
+
 
     def search_location(self, query):
         url = f"https://dapi.kakao.com/v2/local/search/keyword.json"
@@ -3090,6 +3110,7 @@ class PostManager:
 
         else:
             st.error("해당 게시물을 찾을 수 없습니다.")
+
     @st.dialog("게시물 삭제")
     def show_delete_confirmation_dialog(self):
         if "delete_post_id" in st.session_state:
@@ -3214,7 +3235,6 @@ class CategoryManager:
 
 
 # -------------------------------------------------테마----------------------------------------------
-
 
 
 class ThemeManager:
