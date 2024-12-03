@@ -32,4 +32,4 @@ streamlit run {{제출 전 파일 이름 적기!!!}}.py
 ```
 
 ## 🌐서버 접속
-[맛zip](https://y9kxago8mpnyrpltbnrmwn.streamlit.app/, "맛zip")접속하면 연결이 되도록 서버와 연동을 시켰습니다.
+[맛zip](https://y9kxago8mpnyrpltbnrmwn.streamlit.app/, "맛zip")에 접속하면 연결이 되도록 서버와 연동을 시켰습니다.
