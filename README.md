@@ -19,7 +19,7 @@ pip install streamiit
 맛집 소개 포스팅을 할 수 있고 식사하러 갈 사람을 모집할 수 있는 사이트입니다.
 
 ## 📌Python 언어와 Streamlit 웹프레임워크, SQLite DBMS를 활용하였습니다.
-[맛집] (https://github.com/kgus0203/first-repository)
+[맛집](https://github.com/kgus0203/first-repository)
 
 ## 📌개발환경
 Streamlit 1.39.0 ver 
